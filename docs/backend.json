@@ -1,0 +1,615 @@
+{
+  "entities": {
+    "Member": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Member",
+      "type": "object",
+      "description": "Represents a member of the ACIM association.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Member entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the member."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the member.",
+          "format": "email"
+        },
+        "phone": {
+          "type": "string",
+          "description": "The phone number of the member."
+        },
+        "address": {
+          "type": "string",
+          "description": "The address of the member."
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the member ('Actif'/'Inactif')."
+        },
+        "role": {
+          "type": "string",
+          "description": "The role of the member ('admin'/'membre')."
+        },
+        "doc": {
+          "type": "string",
+          "description": "Document type ('M'/'C'/'')."
+        },
+        "memo": {
+          "type": "string",
+          "description": "A memo or notes about the member."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "email",
+        "status",
+        "role"
+      ]
+    },
+    "Transaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Transaction",
+      "type": "object",
+      "description": "Represents a financial transaction (donation or contribution) made by a member.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Transaction entity."
+        },
+        "memberId": {
+          "type": "string",
+          "description": "Reference to Member. (Relationship: Member 1:N Transaction)"
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of transaction ('Don'/'Cotisation')."
+        },
+        "category": {
+          "type": "string",
+          "description": "The category of the donation (if applicable)."
+        },
+        "date": {
+          "type": "string",
+          "description": "The date of the transaction.",
+          "format": "date-time"
+        },
+        "amount": {
+          "type": "number",
+          "description": "The amount of the transaction."
+        },
+        "paymentMethods": {
+          "type": "array",
+          "description": "The payment method(s) used for the transaction. Supports multi-mode payments.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "isCerfaEligible": {
+          "type": "boolean",
+          "description": "Indicates if the transaction is eligible for a CERFA receipt."
+        },
+        "memo": {
+          "type": "string",
+          "description": "A memo or notes about the transaction."
+        }
+      },
+      "required": [
+        "id",
+        "memberId",
+        "type",
+        "date",
+        "amount",
+        "paymentMethods",
+        "isCerfaEligible"
+      ]
+    },
+    "EventModel": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "EventModel",
+      "type": "object",
+      "description": "Represents a template for events, defining the title, date, and pricing tiers.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the EventModel entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the event model."
+        },
+        "date": {
+          "type": "string",
+          "description": "The date of the event.",
+          "format": "date-time"
+        },
+        "adultPrice": {
+          "type": "number",
+          "description": "The price for adults."
+        },
+        "studentPrice": {
+          "type": "number",
+          "description": "The price for students/children > 6 years old."
+        },
+        "childPrice": {
+          "type": "number",
+          "description": "The price for children < 6 years old."
+        },
+        "guestPrice": {
+          "type": "number",
+          "description": "The price for guests."
+        },
+        "isCerfaEligible": {
+          "type": "boolean",
+          "description": "Indicates if the event is eligible for CERFA."
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "date",
+        "adultPrice",
+        "studentPrice",
+        "childPrice",
+        "guestPrice",
+        "isCerfaEligible"
+      ]
+    },
+    "EventRegistration": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "EventRegistration",
+      "type": "object",
+      "description": "Represents a registration for a specific event.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the EventRegistration entity."
+        },
+        "eventId": {
+          "type": "string",
+          "description": "Reference to EventModel. (Relationship: EventModel 1:N EventRegistration)"
+        },
+        "memberId": {
+          "type": "string",
+          "description": "Reference to Member. (Relationship: Member 1:N EventRegistration)"
+        },
+        "adultCount": {
+          "type": "number",
+          "description": "The number of adult participants."
+        },
+        "studentCount": {
+          "type": "number",
+          "description": "The number of student participants."
+        },
+        "childCount": {
+          "type": "number",
+          "description": "The number of child participants."
+        },
+        "guestCount": {
+          "type": "number",
+          "description": "The number of guest participants."
+        },
+        "paymentStatus": {
+          "type": "string",
+          "description": "The payment status of the registration."
+        },
+        "isCerfaEligible": {
+          "type": "boolean",
+          "description": "Indicates if the registration is eligible for CERFA."
+        }
+      },
+      "required": [
+        "id",
+        "eventId",
+        "memberId",
+        "adultCount",
+        "studentCount",
+        "childCount",
+        "guestCount",
+        "paymentStatus",
+        "isCerfaEligible"
+      ]
+    },
+    "CandleSaleModel": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CandleSaleModel",
+      "type": "object",
+      "description": "Represents a template for candle sales, including a list of candles with names and photos.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the CandleSaleModel entity."
+        },
+        "candles": {
+          "type": "array",
+          "description": "A list of candles in the sale model.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "candles"
+      ]
+    },
+    "CandleSale": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CandleSale",
+      "type": "object",
+      "description": "Represents an instance of a candle sale, assigning candles to members and tracking payment.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the CandleSale entity."
+        },
+        "candleSaleModelId": {
+          "type": "string",
+          "description": "Reference to CandleSaleModel. (Relationship: CandleSaleModel 1:N CandleSale)"
+        },
+        "memberId": {
+          "type": "string",
+          "description": "Reference to Member. (Relationship: Member 1:N CandleSale)"
+        },
+        "assignedCandles": {
+          "type": "array",
+          "description": "A list of candles assigned to the member in this sale.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "paymentStatus": {
+          "type": "string",
+          "description": "The payment status of the candle sale."
+        },
+        "isCerfaEligible": {
+          "type": "boolean",
+          "description": "Indicates if the sale is eligible for CERFA."
+        }
+      },
+      "required": [
+        "id",
+        "candleSaleModelId",
+        "memberId",
+        "assignedCandles",
+        "paymentStatus",
+        "isCerfaEligible"
+      ]
+    },
+    "ShopProduct": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ShopProduct",
+      "type": "object",
+      "description": "Represents a product available in the shop.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ShopProduct entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the product."
+        },
+        "price": {
+          "type": "number",
+          "description": "The price of the product."
+        },
+        "stock": {
+          "type": "number",
+          "description": "The current stock level of the product."
+        },
+        "photo": {
+          "type": "string",
+          "description": "URL of the product photo.",
+          "format": "uri"
+        },
+        "availability": {
+          "type": "boolean",
+          "description": "Indicates if the product is currently available for sale."
+        },
+        "isCerfaEligible": {
+          "type": "boolean",
+          "description": "Indicates if the product is eligible for CERFA."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "price",
+        "stock",
+        "availability",
+        "isCerfaEligible"
+      ]
+    },
+    "ShopSale": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ShopSale",
+      "type": "object",
+      "description": "Represents a sale made in the shop, including the products sold and payment information. Supports multi-mode payments.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ShopSale entity."
+        },
+        "memberId": {
+          "type": "string",
+          "description": "Reference to Member. (Relationship: Member 1:N ShopSale). Can be null if the sale was not associated with a member."
+        },
+        "products": {
+          "type": "array",
+          "description": "A list of product IDs included in the sale.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "payments": {
+          "type": "array",
+          "description": "A list of payment methods used for the sale. Supports multi-mode payments.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "totalAmount": {
+          "type": "number",
+          "description": "The total amount of the sale."
+        },
+        "date": {
+          "type": "string",
+          "description": "The date of the sale.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "products",
+        "payments",
+        "totalAmount",
+        "date"
+      ]
+    },
+    "Cerfa": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Cerfa",
+      "type": "object",
+      "description": "Represents a CERFA receipt, which can be generated for eligible transactions.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Cerfa entity."
+        },
+        "transactionId": {
+          "type": "string",
+          "description": "Reference to Transaction, EventRegistration, or CandleSale. (Relationship: One of these entities 1:1 Cerfa)"
+        },
+        "cerfaNumber": {
+          "type": "string",
+          "description": "The unique number assigned to the CERFA receipt."
+        },
+        "generationDate": {
+          "type": "string",
+          "description": "The date the CERFA receipt was generated.",
+          "format": "date-time"
+        },
+        "isCancelled": {
+          "type": "boolean",
+          "description": "Indicates if the CERFA receipt has been cancelled."
+        },
+        "cancellationReason": {
+          "type": "string",
+          "description": "The reason for cancelling the CERFA receipt (if applicable)."
+        },
+        "cancellationDate": {
+          "type": "string",
+          "description": "The date the CERFA receipt was cancelled (if applicable).",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "transactionId",
+        "cerfaNumber",
+        "generationDate",
+        "isCancelled"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/members/{memberId}",
+        "definition": {
+          "entityName": "Member",
+          "schema": {
+            "$ref": "#/backend/entities/Member"
+          },
+          "description": "Stores member data. Document ID is the member's UID.",
+          "params": [
+            {
+              "name": "memberId",
+              "description": "The unique identifier of the member."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/members/{memberId}/transactions/{transactionId}",
+        "definition": {
+          "entityName": "Transaction",
+          "schema": {
+            "$ref": "#/backend/entities/Transaction"
+          },
+          "description": "Stores transaction data for a specific member. Document ID is a unique transaction ID.",
+          "params": [
+            {
+              "name": "memberId",
+              "description": "The unique identifier of the member."
+            },
+            {
+              "name": "transactionId",
+              "description": "The unique identifier of the transaction."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/eventModels/{eventModelId}",
+        "definition": {
+          "entityName": "EventModel",
+          "schema": {
+            "$ref": "#/backend/entities/EventModel"
+          },
+          "description": "Stores event model data. Document ID is a unique event model ID.",
+          "params": [
+            {
+              "name": "eventModelId",
+              "description": "The unique identifier of the event model."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/members/{memberId}/eventRegistrations/{eventRegistrationId}",
+        "definition": {
+          "entityName": "EventRegistration",
+          "schema": {
+            "$ref": "#/backend/entities/EventRegistration"
+          },
+          "description": "Stores event registration data for a specific member. Document ID is a unique event registration ID.",
+          "params": [
+            {
+              "name": "memberId",
+              "description": "The unique identifier of the member."
+            },
+            {
+              "name": "eventRegistrationId",
+              "description": "The unique identifier of the event registration."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/candleSaleModels/{candleSaleModelId}",
+        "definition": {
+          "entityName": "CandleSaleModel",
+          "schema": {
+            "$ref": "#/backend/entities/CandleSaleModel"
+          },
+          "description": "Stores candle sale model data. Document ID is a unique candle sale model ID.",
+          "params": [
+            {
+              "name": "candleSaleModelId",
+              "description": "The unique identifier of the candle sale model."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/members/{memberId}/candleSales/{candleSaleId}",
+        "definition": {
+          "entityName": "CandleSale",
+          "schema": {
+            "$ref": "#/backend/entities/CandleSale"
+          },
+          "description": "Stores candle sale data for a specific member. Document ID is a unique candle sale ID.",
+          "params": [
+            {
+              "name": "memberId",
+              "description": "The unique identifier of the member."
+            },
+            {
+              "name": "candleSaleId",
+              "description": "The unique identifier of the candle sale."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/shopProducts/{shopProductId}",
+        "definition": {
+          "entityName": "ShopProduct",
+          "schema": {
+            "$ref": "#/backend/entities/ShopProduct"
+          },
+          "description": "Stores shop product data. Document ID is a unique shop product ID.",
+          "params": [
+            {
+              "name": "shopProductId",
+              "description": "The unique identifier of the shop product."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/shopSales/{shopSaleId}",
+        "definition": {
+          "entityName": "ShopSale",
+          "schema": {
+            "$ref": "#/backend/entities/ShopSale"
+          },
+          "description": "Stores shop sale data. Document ID is a unique shop sale ID.  Includes denormalized 'memberId' for authorization.",
+          "params": [
+            {
+              "name": "shopSaleId",
+              "description": "The unique identifier of the shop sale."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/cerfas/{cerfaId}",
+        "definition": {
+          "entityName": "Cerfa",
+          "schema": {
+            "$ref": "#/backend/entities/Cerfa"
+          },
+          "description": "Stores CERFA receipt data. Document ID is a unique CERFA ID.",
+          "params": [
+            {
+              "name": "cerfaId",
+              "description": "The unique identifier of the CERFA receipt."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{userId}",
+        "definition": {
+          "entityName": "AdminRole",
+          "schema": {
+            "$ref": "#/backend/entities/Member"
+          },
+          "description": "Stores admin roles. The existence of a document with the user's UID grants admin privileges.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user (UID)."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/appSettings/cerfaCounters",
+        "definition": {
+          "entityName": "CerfaCounter",
+          "schema": {
+            "$ref": "#/backend/entities/Cerfa"
+          },
+          "description": "Stores annual CERFA counters.",
+          "params": []
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to ensure security, scalability, and ease of debugging, following the core design principles and strategy mandates outlined. Key to this is authorization independence, achieved through denormalization of authorization context where necessary. This eliminates the need for `get()` calls in security rules, enabling atomic operations and simplified debugging.  The structure also supports required QAPs via structural segregation and membership models.\n\n*   **Members:** Member data is stored in a top-level `members` collection.  This allows for easy listing and querying of members.\n*   **Transactions:** Transactions are stored as a subcollection of members (`members/{memberId}/transactions/{transactionId}`). This enforces a 1:N relationship between members and transactions. This collection directly contains data about the transaction.\n*   **Events:** Event models are stored in a top-level `eventModels` collection, and event registrations are stored as a subcollection of members (`members/{memberId}/eventRegistrations/{eventRegistrationId}`). This enables efficient querying of event registrations for a specific member.\n*   **Candle Sales:** Candle sale models are stored in a top-level `candleSaleModels` collection, while individual candle sales are stored as subcollections of members (`members/{memberId}/candleSales/{candleSaleId}`). This mirrors the event registration pattern.\n*   **Shop:** Shop products are stored in a top-level `shopProducts` collection. Shop sales are stored as a top-level `shopSales` collection. The `shopSales` documents include the `memberId` and array of `payments` and `products`.\n*   **CERFA:** CERFA receipts are stored in a top-level `cerfas` collection.  Each CERFA document includes a `transactionId` to link it to the associated transaction, event registration, or candle sale.  CERFAs are never deleted; instead, they are marked as cancelled with a cancellation reason and date.  A separate `appSettings` document stores the annual CERFA counters.\n*   **Admin Roles:** An `roles_admin` collection stores documents with UIDs as document IDs.  The existence of a document indicates admin privileges.\n\nThis structure prioritizes authorization independence. For example, to secure the transactions subcollection, security rules can check the `request.auth.uid` against the `memberId` in the parent document to ensure that the user can only access their own transactions. The `members` top level is protected by existence of a document in the `roles_admin` collection for modification and creation.\n\nSegregation of data based on access control requirements is implemented. Publicly accessible data (if any) would be stored in separate collections from private user data. The use of subcollections ensures that access to child documents is always contextualized within the parent document's authorization.\n\nFor list operations (QAPs), the structure supports secure listing because the subcollections guarantee that listing transactions or event registrations can be scoped to a specific member, without requiring filtering in the rules. The top level collections `shopSales`, `eventModels`, and `candleSaleModels` require admin permissions to list."
+  }
+}

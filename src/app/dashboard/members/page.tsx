@@ -195,7 +195,7 @@ export default function MembersPage() {
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
                             type="search"
-                            placeholder="Rechercher par nom, email, mémo..."
+                            placeholder="Rechercher par Nom, Email, Memo"
                             className="pl-8 bg-background"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}

@@ -7,7 +7,7 @@ import { AddMemberDialog } from "./add-member-dialog";
 import React, { useState, useRef, useMemo } from "react";
 import * as XLSX from "xlsx";
 import { useFirestore, addDocumentNonBlocking, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, writeBatch } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -56,8 +56,24 @@ export default function MembersPage() {
     if (!file || !firestore) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
+        const membersCollection = collection(firestore, "members");
+
+        // 1. Delete all existing documents
+        const existingMembersSnapshot = await getDocs(membersCollection);
+        const batch = writeBatch(firestore);
+        existingMembersSnapshot.forEach((doc) => {
+          batch.delete(doc.ref);
+        });
+        await batch.commit();
+
+        toast({
+          title: "Nettoyage terminé",
+          description: `${existingMembersSnapshot.size} anciens membres supprimés.`,
+        });
+
+        // 2. Import new documents
         const data = e.target?.result;
         const workbook = XLSX.read(data, { type: "binary" });
         const sheetName = workbook.SheetNames[0];
@@ -73,8 +89,12 @@ export default function MembersPage() {
           return;
         }
 
-        const membersCollection = collection(firestore, "members");
         let importedCount = 0;
+        
+        // Use a new batch for additions
+        const addBatch = writeBatch(firestore);
+        const newMembersCollection = collection(firestore, "members");
+
 
         json.forEach((row: any) => {
           const memberData = {
@@ -87,21 +107,26 @@ export default function MembersPage() {
             doc: ["M", "C", ""].includes(row["Doc"]) ? row["Doc"] : "",
             memo: row["Memo"] || "",
           };
-          addDocumentNonBlocking(membersCollection, memberData);
+           // We have to create a new doc ref for batch writes
+          const newDocRef = doc(newMembersCollection);
+          addBatch.set(newDocRef, memberData);
           importedCount++;
         });
 
+        await addBatch.commit();
+
         toast({
           title: "Importation réussie",
-          description: `${importedCount} membres ont été importés avec succès.`,
+          description: `${importedCount} nouveaux membres ont été importés avec succès.`,
         });
+
       } catch (error) {
         console.error("Erreur lors de l'importation :", error);
         toast({
           variant: "destructive",
           title: "Erreur d'importation",
           description:
-            "Un problème est survenu lors de la lecture du fichier. Assurez-vous qu'il est au bon format.",
+            "Un problème est survenu lors de l'importation. Vérifiez la console pour les détails.",
         });
       }
     };

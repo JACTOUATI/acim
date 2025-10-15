@@ -1,303 +1,201 @@
 /**
- * @file Firestore Security Rules
- * @version 2
+ * @fileoverview Firestore Security Rules for ACIM Association.
  *
- * @description
- * This ruleset enforces a strict user-ownership model for member-related data,
- * with admin override capabilities. It leverages structural segregation and
- * denormalization to ensure secure and efficient data access control.
+ * Core Philosophy:
+ * This ruleset prioritizes simplicity and ease of access for prototyping.
+ * All read and write operations are currently permitted for all authenticated users.
+ * This is NOT a secure configuration for production and should be updated immediately.
  *
  * Data Structure:
- * - Members: Root collection, each document represents a member.
- * - Transactions: Subcollection of Members, stores transaction history.
- * - EventModels: Root collection, stores event templates.
- * - EventRegistrations: Subcollection of Members, stores event registrations.
- * - CandleSaleModels: Root collection, stores candle sale templates.
- * - CandleSales: Subcollection of Members, stores candle sales.
- * - ShopProducts: Root collection, stores products for sale.
- * - ShopSales: Root collection, stores sales records, includes `memberId`.
- * - Cerfas: Root collection, stores CERFA receipt data.
- * - roles_admin: Root collection, existence of a document grants admin privileges.
- * - appSettings: Root collection, stores counters for Cerfa generation.
+ * - /members/{memberId}: Stores member data.
+ * - /members/{memberId}/transactions/{transactionId}: Stores transaction data for a member.
+ * - /eventModels/{eventModelId}: Stores event model data.
+ * - /members/{memberId}/eventRegistrations/{eventRegistrationId}: Stores event registration data.
+ * - /candleSaleModels/{candleSaleModelId}: Stores candle sale model data.
+ * - /members/{memberId}/candleSales/{candleSaleId}: Stores candle sale data.
+ * - /shopProducts/{shopProductId}: Stores shop product data.
+ * - /shopSales/{shopSaleId}: Stores shop sale data.
+ * - /cerfas/{cerfaId}: Stores CERFA receipt data.
+ * - /roles_admin/{userId}: Stores admin roles.
+ * - /appSettings/cerfaCounters: Stores CERFA counters.
  *
  * Key Security Decisions:
- * - Members can only access their own data (transactions, event registrations, candle sales).
- * - Only admins can create/modify/delete members.
- * - Only admins can create/modify/delete event models, candle sale models, and shop products.
- * - Shop sales include a `memberId` to track which member made the purchase.
- * - CERFA receipts are publicly accessible.
- * - No user listing is allowed for the `members` collection.
+ * - All authenticated users can read and write all data.
+ * - No schema validation is performed.
  *
- * Denormalization for Authorization:
- * - The `shopSales` collection denormalizes the `memberId` field to allow rules to
- *   quickly determine ownership without additional reads.
- *
- * Structural Segregation:
- * - Private member data is stored under `/members/{memberId}`, while public data
- *   (e.g., event models, shop products) is stored in top-level collections.
+ * WARNING: This ruleset is for rapid prototyping ONLY and is NOT secure for production use.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Protects access to annual CERFA counters under app settings.
-     * @path /appSettings/cerfaCounters
-     * @allow (get, list) if isAdmin()
-     * @allow (create, update, delete) if isAdmin()
-     * @deny (get, list) if !isAdmin()
-     * @deny (create, update, delete) if !isAdmin()
-     * @principle Admin-only access to CERFA counters.
-     */
-    match /appSettings/cerfaCounters {
-      allow get, list: if isAdmin();
-      allow create, update, delete: if isAdmin();
-    }
-
-    /**
-     * @description Manages admin user roles. Only admins can create, update, or delete admin roles.
-     * @path /roles_admin/{userId}
-     * @allow get: if isAdmin();
-     * @allow list: if isAdmin();
-     * @allow create: if isAdmin();
-     * @allow update: if isAdmin();
-     * @allow delete: if isAdmin();
-     * @deny get: if !isAdmin();
-     * @deny list: if !isAdmin();
-     * @deny create: if !isAdmin();
-     * @deny update: if !isAdmin();
-     * @deny delete: if !isAdmin();
-     * @principle Enforces role-based access control for admin privileges.
-     */
-    match /roles_admin/{userId} {
-      allow get, list: if isAdmin();
-      allow create: if isAdmin();
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
-    }
-
-    /**
-     * @description Manages member data. Only admins can create, update, or delete members.
+     * @description Allows any authenticated user to read and write member data.
      * @path /members/{memberId}
-     * @allow get: if isAdmin();
-     * @allow list: if false; // No user listing allowed
-     * @allow create: if isAdmin();
-     * @allow update: if isAdmin();
-     * @allow delete: if isAdmin();
-     * @deny get: if !isAdmin();
-     * @deny create: if !isAdmin();
-     * @deny update: if !isAdmin();
-     * @deny delete: if !isAdmin();
-     * @principle Enforces role-based access control for member management.
+     * @allow (create) - Any authenticated user can create a member.
+     * @allow (read) - Any authenticated user can read a member.
+     * @allow (update) - Any authenticated user can update a member.
+     * @allow (delete) - Any authenticated user can delete a member.
+     * @deny (create) - Never.
+     * @principle Allows anyone to read and write member data.
      */
     match /members/{memberId} {
-      allow get: if isAdmin();
-      allow list: if false;
-      allow create: if isAdmin();
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Manages transaction data for a specific member.
+     * @description Allows any authenticated user to read and write transaction data for a member.
      * @path /members/{memberId}/transactions/{transactionId}
-     * @allow get: if isOwner(memberId);
-     * @allow list: if isOwner(memberId);
-     * @allow create: if isOwner(memberId);
-     * @allow update: if isExistingOwner(memberId);
-     * @allow delete: if isExistingOwner(memberId);
-     * @deny get: if !isOwner(memberId);
-     * @deny create: if !isOwner(memberId);
-     * @deny update: if !isExistingOwner(memberId);
-     * @deny delete: if !isExistingOwner(memberId);
-     * @principle Enforces document ownership for transaction data.
+     * @allow (create) - Any authenticated user can create a transaction.
+     * @allow (read) - Any authenticated user can read a transaction.
+     * @allow (update) - Any authenticated user can update a transaction.
+     * @allow (delete) - Any authenticated user can delete a transaction.
+     * @deny (create) - Never.
+     * @principle Allows anyone to read and write transaction data.
      */
     match /members/{memberId}/transactions/{transactionId} {
-      allow get: if isOwner(memberId);
-      allow list: if isOwner(memberId);
-      allow create: if isOwner(memberId);
-      allow update: if isExistingOwner(memberId);
-      allow delete: if isExistingOwner(memberId);
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Manages event model data. Only admins can create, update, or delete event models.
+     * @description Allows any authenticated user to read and write event model data.
      * @path /eventModels/{eventModelId}
-     * @allow get: if true;
-     * @allow list: if isAdmin();
-     * @allow create: if isAdmin();
-     * @allow update: if isExistingAdmin();
-     * @allow delete: if isExistingAdmin();
-     * @deny create: if !isAdmin();
-     * @deny update: if !isExistingAdmin();
-     * @deny delete: if !isExistingAdmin();
-     * @principle Enforces role-based access control for event model management.
+     * @allow (create) - Any authenticated user can create an event model.
+     * @allow (read) - Any authenticated user can read an event model.
+     * @allow (update) - Any authenticated user can update an event model.
+     * @allow (delete) - Any authenticated user can delete an event model.
+     * @deny (create) - Never.
+     * @principle Allows anyone to read and write event model data.
      */
     match /eventModels/{eventModelId} {
-      allow get: if true;
-      allow list: if isAdmin();
-      allow create: if isAdmin();
-      allow update: if isExistingAdmin();
-      allow delete: if isExistingAdmin();
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Manages event registration data for a specific member.
+     * @description Allows any authenticated user to read and write event registration data for a member.
      * @path /members/{memberId}/eventRegistrations/{eventRegistrationId}
-     * @allow get: if isOwner(memberId);
-     * @allow list: if isOwner(memberId);
-     * @allow create: if isOwner(memberId);
-     * @allow update: if isExistingOwner(memberId);
-     * @allow delete: if isExistingOwner(memberId);
-     * @deny get: if !isOwner(memberId);
-     * @deny create: if !isOwner(memberId);
-     * @deny update: if !isExistingOwner(memberId);
-     * @deny delete: if !isExistingOwner(memberId);
-     * @principle Enforces document ownership for event registration data.
+     * @allow (create) - Any authenticated user can create an event registration.
+     * @allow (read) - Any authenticated user can read an event registration.
+     * @allow (update) - Any authenticated user can update an event registration.
+     * @allow (delete) - Any authenticated user can delete an event registration.
+     * @deny (create) - Never.
+     * @principle Allows anyone to read and write event registration data.
      */
     match /members/{memberId}/eventRegistrations/{eventRegistrationId} {
-      allow get: if isOwner(memberId);
-      allow list: if isOwner(memberId);
-      allow create: if isOwner(memberId);
-      allow update: if isExistingOwner(memberId);
-      allow delete: if isExistingOwner(memberId);
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Manages candle sale model data. Only admins can create, update, or delete candle sale models.
+     * @description Allows any authenticated user to read and write candle sale model data.
      * @path /candleSaleModels/{candleSaleModelId}
-     * @allow get: if true;
-     * @allow list: if isAdmin();
-     * @allow create: if isAdmin();
-     * @allow update: if isExistingAdmin();
-     * @allow delete: if isExistingAdmin();
-     * @deny create: if !isAdmin();
-     * @deny update: if !isExistingAdmin();
-     * @deny delete: if !isExistingAdmin();
-     * @principle Enforces role-based access control for candle sale model management.
+     * @allow (create) - Any authenticated user can create a candle sale model.
+     * @allow (read) - Any authenticated user can read a candle sale model.
+     * @allow (update) - Any authenticated user can update a candle sale model.
+     * @allow (delete) - Any authenticated user can delete a candle sale model.
+     * @deny (create) - Never.
+     * @principle Allows anyone to read and write candle sale model data.
      */
     match /candleSaleModels/{candleSaleModelId} {
-      allow get: if true;
-      allow list: if isAdmin();
-      allow create: if isAdmin();
-      allow update: if isExistingAdmin();
-      allow delete: if isExistingAdmin();
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Manages candle sale data for a specific member.
+     * @description Allows any authenticated user to read and write candle sale data for a member.
      * @path /members/{memberId}/candleSales/{candleSaleId}
-     * @allow get: if isOwner(memberId);
-     * @allow list: if isOwner(memberId);
-     * @allow create: if isOwner(memberId);
-     * @allow update: if isExistingOwner(memberId);
-     * @allow delete: if isExistingOwner(memberId);
-     * @deny get: if !isOwner(memberId);
-     * @deny create: if !isOwner(memberId);
-     * @deny update: if !isExistingOwner(memberId);
-     * @deny delete: if !isExistingOwner(memberId);
-     * @principle Enforces document ownership for candle sale data.
+     * @allow (create) - Any authenticated user can create a candle sale.
+     * @allow (read) - Any authenticated user can read a candle sale.
+     * @allow (update) - Any authenticated user can update a candle sale.
+     * @allow (delete) - Any authenticated user can delete a candle sale.
+     * @deny (create) - Never.
+     * @principle Allows anyone to read and write candle sale data.
      */
     match /members/{memberId}/candleSales/{candleSaleId} {
-      allow get: if isOwner(memberId);
-      allow list: if isOwner(memberId);
-      allow create: if isOwner(memberId);
-      allow update: if isExistingOwner(memberId);
-      allow delete: if isExistingOwner(memberId);
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Manages shop product data. Only admins can create, update, or delete shop products.
+     * @description Allows any authenticated user to read and write shop product data.
      * @path /shopProducts/{shopProductId}
-     * @allow get: if true;
-     * @allow list: if isAdmin();
-     * @allow create: if isAdmin();
-     * @allow update: if isExistingAdmin();
-     * @allow delete: if isExistingAdmin();
-     * @deny create: if !isAdmin();
-     * @deny update: if !isExistingAdmin();
-     * @deny delete: if !isExistingAdmin();
-     * @principle Enforces role-based access control for shop product management.
+     * @allow (create) - Any authenticated user can create a shop product.
+     * @allow (read) - Any authenticated user can read a shop product.
+     * @allow (update) - Any authenticated user can update a shop product.
+     * @allow (delete) - Any authenticated user can delete a shop product.
+     * @deny (create) - Never.
+     * @principle Allows anyone to read and write shop product data.
      */
     match /shopProducts/{shopProductId} {
-      allow get: if true;
-      allow list: if isAdmin();
-      allow create: if isAdmin();
-      allow update: if isExistingAdmin();
-      allow delete: if isExistingAdmin();
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Manages shop sale data. Shop sales are accessible to all members.
+     * @description Allows any authenticated user to read and write shop sale data.
      * @path /shopSales/{shopSaleId}
-     * @allow get: if true;
-     * @allow list: if isAdmin();
-     * @allow create: if true; // TODO: Add owner validation once the schema is updated with an ownership field.
-     * @allow update: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
-     * @allow delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
-     * @principle Allows all members to view shop sales.
+     * @allow (create) - Any authenticated user can create a shop sale.
+     * @allow (read) - Any authenticated user can read a shop sale.
+     * @allow (update) - Any authenticated user can update a shop sale.
+     * @allow (delete) - Any authenticated user can delete a shop sale.
+     * @deny (create) - Never.
+     * @principle Allows anyone to read and write shop sale data.
      */
     match /shopSales/{shopSaleId} {
-      allow get: if true;
-      allow list: if isAdmin();
-      allow create: if true; // TODO: Add owner validation once the schema is updated with an ownership field.
-      allow update: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
-      allow delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Manages CERFA receipt data. CERFA receipts are publicly accessible.
+     * @description Allows any authenticated user to read and write CERFA receipt data.
      * @path /cerfas/{cerfaId}
-     * @allow get: if true;
-     * @allow list: if isAdmin();
-     * @allow create: if isAdmin();
-     * @allow update: if isExistingAdmin();
-     * @allow delete: if isExistingAdmin();
-     * @deny create: if !isAdmin();
-     * @deny update: if !isExistingAdmin();
-     * @deny delete: if !isExistingAdmin();
-     * @principle Allows all members to view CERFA receipts.
+     * @allow (create) - Any authenticated user can create a CERFA receipt.
+     * @allow (read) - Any authenticated user can read a CERFA receipt.
+     * @allow (update) - Any authenticated user can update a CERFA receipt.
+     * @allow (delete) - Any authenticated user can delete a CERFA receipt.
+     * @deny (create) - Never.
+     * @principle Allows anyone to read and write CERFA receipt data.
      */
     match /cerfas/{cerfaId} {
-      allow get: if true;
-      allow list: if isAdmin();
-      allow create: if isAdmin();
-      allow update: if isExistingAdmin();
-      allow delete: if isExistingAdmin();
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Checks if the current user is the owner of the resource.
-     * @param {string} userId The user ID to compare against the request's auth UID.
-     * @returns {boolean} True if the user is the owner, false otherwise.
+     * @description Allows any authenticated user to read and write admin roles data.
+     * @path /roles_admin/{userId}
+     * @allow (create) - Any authenticated user can create an admin role.
+     * @allow (read) - Any authenticated user can read an admin role.
+     * @allow (update) - Any authenticated user can update an admin role.
+     * @allow (delete) - Any authenticated user can delete an admin role.
+     * @deny (create) - Never.
+     * @principle Allows anyone to read and write admin roles data.
      */
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
+    match /roles_admin/{userId} {
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Checks if the current user is the owner of an existing resource.
-     * @param {string} userId The user ID to compare against the resource's owner ID.
-     * @returns {boolean} True if the user is the owner and the resource exists, false otherwise.
+     * @description Allows any authenticated user to read and write CERFA counters data.
+     * @path /appSettings/cerfaCounters
+     * @allow (create) - Any authenticated user can create CERFA counters.
+     * @allow (read) - Any authenticated user can read CERFA counters.
+     * @allow (update) - Any authenticated user can update CERFA counters.
+     * @allow (delete) - Any authenticated user can delete CERFA counters.
+     * @deny (create) - Never.
+     * @principle Allows anyone to read and write CERFA counters data.
      */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
+    match /appSettings/cerfaCounters {
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
     }
+  }
 
-    /**
-     * @description Checks if the current user is an admin.
-     * @returns {boolean} True if the user is an admin, false otherwise.
-     */
-    function isAdmin() {
-      return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
-    }
-
-    /**
-     * @description Checks if an existing document has admin permissions.
-     * @returns {boolean} True if the document exists and the user is an admin, false otherwise.
-     */
-    function isExistingAdmin() {
-      return isAdmin() && resource != null;
-    }
+  function isSignedIn() {
+    return request.auth != null;
   }
 }

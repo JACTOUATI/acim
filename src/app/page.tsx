@@ -13,22 +13,13 @@ import Image from "next/image";
 function AcimLogo() {
   return (
     <div className="flex flex-col items-center text-center">
-      <svg
-        className="h-16 w-16 text-blue-500"
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-        <path d="M12 2l-3.09 6.26L2 9.27l5 4.87-1.18 6.88L12 17.77l6.18 3.25L17 14.14l5-4.87-6.91-1.01L12 2z" />
-         <path d="M2 9.27h20" />
-         <path d="M7 14.14l-4 3.86" />
-        <path d="M17 14.14l4 3.86" />
-      </svg>
+      <Image 
+        src="/etoile.png" 
+        alt="ACIM Logo"
+        width={64}
+        height={64}
+        className="h-16 w-16"
+      />
       <span className="text-lg font-bold tracking-wider">ACIM</span>
     </div>
   );
@@ -45,12 +36,11 @@ export default function LoginPage() {
           {/* Left: Image */}
           <div className="col-span-1 flex items-center justify-center">
              <Image
-                src="https://picsum.photos/seed/1/400/600"
-                alt="Western Wall"
+                src="/mur.jpeg"
+                alt="Mur des lamentations"
                 width={400}
                 height={600}
                 className="rounded-xl object-cover shadow-lg"
-                data-ai-hint="western wall jerusalem"
             />
           </div>
 

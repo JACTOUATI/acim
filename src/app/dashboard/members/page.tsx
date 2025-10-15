@@ -190,7 +190,7 @@ export default function MembersPage() {
                     <CardDescription>Recherchez, filtrez et gérez les membres existants.</CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
-                    <div className="relative w-full max-w-xs">
+                    <div className="relative w-full max-w-sm">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                         type="search"
@@ -201,7 +201,7 @@ export default function MembersPage() {
                         />
                     </div>
                      <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-[200px]">
+                      <SelectTrigger className="w-[180px]">
                         <SelectValue placeholder="Filtrer par statut" />
                       </SelectTrigger>
                       <SelectContent>
@@ -211,7 +211,7 @@ export default function MembersPage() {
                       </SelectContent>
                     </Select>
                     <Select value={docFilter} onValueChange={setDocFilter}>
-                      <SelectTrigger className="w-[200px]">
+                      <SelectTrigger className="w-[180px]">
                         <SelectValue placeholder="Filtrer par doc" />
                       </SelectTrigger>
                       <SelectContent>

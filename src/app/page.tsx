@@ -20,7 +20,6 @@ function AcimLogo() {
         height={64}
         className="h-16 w-16"
       />
-      <span className="text-lg font-bold tracking-wider">ACIM</span>
     </div>
   );
 }

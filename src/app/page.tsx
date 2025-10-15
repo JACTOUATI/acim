@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Heart, Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
+import { useAuth, useUser } from "@/firebase/provider";
+import { initiateEmailSignIn, initiateEmailSignUp } from "@/firebase/non-blocking-login";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+
 
 function AcimLogo() {
   return (
@@ -27,6 +32,44 @@ function AcimLogo() {
 
 export default function LoginPage() {
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [signupName, setSignupName] = useState("");
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const auth = useAuth();
+  const { user, isUserLoading } = useUser();
+  const { toast } = useToast();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (user) {
+      router.push('/dashboard');
+    }
+  }, [user, router]);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!loginEmail || !loginPassword) {
+      toast({ variant: "destructive", title: "Erreur", description: "Veuillez remplir l'email et le mot de passe." });
+      return;
+    }
+    initiateEmailSignIn(auth, loginEmail, loginPassword);
+  };
+
+  const handleSignup = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!signupName || !signupEmail || !signupPassword) {
+        toast({ variant: "destructive", title: "Erreur", description: "Veuillez remplir tous les champs." });
+        return;
+    }
+    initiateEmailSignUp(auth, signupEmail, signupPassword);
+  };
+  
+  if (isUserLoading) {
+    return <div>Chargement...</div>
+  }
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-blue-50 p-4">
@@ -57,10 +100,10 @@ export default function LoginPage() {
                     <TabsTrigger value="signup">S'inscrire</TabsTrigger>
                   </TabsList>
                   <TabsContent value="login">
-                    <form className="space-y-4 pt-4">
+                    <form className="space-y-4 pt-4" onSubmit={handleLogin}>
                       <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
-                        <Input id="email" type="email" placeholder="jjmn.touati@free.fr" required />
+                        <Input id="email" type="email" placeholder="jjmn.touati@free.fr" required value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} />
                       </div>
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
@@ -68,7 +111,7 @@ export default function LoginPage() {
                             <a href="#" className="text-sm text-blue-600 hover:underline">Mot de passe oublié ?</a>
                         </div>
                         <div className="relative">
-                            <Input id="password" type={passwordVisible ? "text" : "password"} required defaultValue="********" />
+                            <Input id="password" type={passwordVisible ? "text" : "password"} required value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} />
                             <button type="button" onClick={() => setPasswordVisible(!passwordVisible)} className="absolute inset-y-0 right-0 flex items-center pr-3">
                                 {passwordVisible ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
                             </button>
@@ -84,18 +127,18 @@ export default function LoginPage() {
                     </form>
                   </TabsContent>
                   <TabsContent value="signup">
-                    <form className="space-y-4 pt-4">
+                    <form className="space-y-4 pt-4" onSubmit={handleSignup}>
                       <div className="space-y-2">
                         <Label htmlFor="signup-name">Nom complet</Label>
-                        <Input id="signup-name" type="text" placeholder="Votre nom" required />
+                        <Input id="signup-name" type="text" placeholder="Votre nom" required value={signupName} onChange={(e) => setSignupName(e.target.value)} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="signup-email">Email</Label>
-                        <Input id="signup-email" type="email" placeholder="email@example.com" required />
+                        <Input id="signup-email" type="email" placeholder="email@example.com" required value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="signup-password">Mot de passe</Label>
-                        <Input id="signup-password" type="password" required />
+                        <Input id="signup-password" type="password" required value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} />
                       </div>
                       <Button type="submit" className="w-full bg-blue-500 hover:bg-blue-600 text-white">
                         S'inscrire

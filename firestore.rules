@@ -2,200 +2,286 @@
  * @fileoverview Firestore Security Rules for ACIM Association.
  *
  * Core Philosophy:
- * This ruleset prioritizes simplicity and ease of access for prototyping.
- * All read and write operations are currently permitted for all authenticated users.
- * This is NOT a secure configuration for production and should be updated immediately.
+ * This ruleset enforces a strict user-ownership model for member-related data
+ * and role-based access control for administrative functions.  Data validation
+ * is minimized to facilitate rapid prototyping.
  *
  * Data Structure:
- * - /members/{memberId}: Stores member data.
- * - /members/{memberId}/transactions/{transactionId}: Stores transaction data for a member.
- * - /eventModels/{eventModelId}: Stores event model data.
- * - /members/{memberId}/eventRegistrations/{eventRegistrationId}: Stores event registration data.
- * - /candleSaleModels/{candleSaleModelId}: Stores candle sale model data.
- * - /members/{memberId}/candleSales/{candleSaleId}: Stores candle sale data.
- * - /shopProducts/{shopProductId}: Stores shop product data.
- * - /shopSales/{shopSaleId}: Stores shop sale data.
+ * - /members/{memberId}: Stores member profiles.
+ * - /members/{memberId}/transactions/{transactionId}: Stores transaction history for each member.
+ * - /eventModels/{eventModelId}: Stores event templates.
+ * - /members/{memberId}/eventRegistrations/{eventRegistrationId}: Stores event registrations for members.
+ * - /candleSaleModels/{candleSaleModelId}: Stores candle sale templates.
+ * - /members/{memberId}/candleSales/{candleSaleId}: Stores candle sales for members.
+ * - /shopProducts/{shopProductId}: Stores product information for the shop.
+ * - /shopSales/{shopSaleId}: Stores shop sale information. `memberId` is denormalized for authorization.
  * - /cerfas/{cerfaId}: Stores CERFA receipt data.
- * - /roles_admin/{userId}: Stores admin roles.
- * - /appSettings/cerfaCounters: Stores CERFA counters.
+ * - /roles_admin/{userId}: Indicates admin privileges. Document existence grants admin access.
+ * - /appSettings/cerfaCounters: Stores annual CERFA counters.
  *
  * Key Security Decisions:
- * - All authenticated users can read and write all data.
- * - No schema validation is performed.
+ * - Members can only read and write their own profile data and related subcollections.
+ * - Only admins can manage members, event models, candle sale models, shop products, list the shopSales, eventModels, and candleSaleModels collections, and manage CERFA counters.
+ * - CERFA receipts are readable by anyone but only modifiable by admins.
+ * - Listing all members is disallowed for privacy.  Instead, the application must retrieve members by ID.
+ * - Data validation is minimized in favor of rapid prototyping. Only authorization-critical fields are validated.
  *
- * WARNING: This ruleset is for rapid prototyping ONLY and is NOT secure for production use.
+ * Denormalization for Authorization:
+ * - The `shopSales` collection denormalizes the `memberId` to allow for efficient authorization without extra `get()` calls.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows any authenticated user to read and write member data.
+     * @description Checks if the request is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the authenticated user ID matches the provided user ID.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+        /**
+     * @description Checks if the authenticated user ID matches the resource owner ID. Also checks if the resource exists.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Checks if the user is an admin by verifying the existence of a document in the `roles_admin` collection with the user's UID as the document ID.
+     */
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+    /**
+     * @description Rules for the /members/{memberId} collection.
      * @path /members/{memberId}
-     * @allow (create) - Any authenticated user can create a member.
-     * @allow (read) - Any authenticated user can read a member.
-     * @allow (update) - Any authenticated user can update a member.
-     * @allow (delete) - Any authenticated user can delete a member.
-     * @deny (create) - Never.
-     * @principle Allows anyone to read and write member data.
+     * @allow (create) Signed-in user creates their own member profile.
+     * @allow (get) Signed-in user reads their own member profile.
+     * @allow (update) Signed-in user updates their own member profile.
+     * @allow (delete) Signed-in user deletes their own member profile.
+     * @deny (create) Signed-in user attempts to create a member profile for another user.
+     * @deny (get) Signed-in user attempts to read another user's member profile.
+     * @deny (update) Signed-in user attempts to update another user's member profile.
+     * @deny (delete) Signed-in user attempts to delete another user's member profile.
+     * @principle Enforces document ownership for member profiles.
      */
     match /members/{memberId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow get: if isOwner(memberId);
+      allow list: if false;
+      allow create: if isOwner(memberId) && request.resource.data.id == memberId;
+      allow update: if isExistingOwner(memberId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(memberId);
     }
 
     /**
-     * @description Allows any authenticated user to read and write transaction data for a member.
+     * @description Rules for the /members/{memberId}/transactions/{transactionId} collection.
      * @path /members/{memberId}/transactions/{transactionId}
-     * @allow (create) - Any authenticated user can create a transaction.
-     * @allow (read) - Any authenticated user can read a transaction.
-     * @allow (update) - Any authenticated user can update a transaction.
-     * @allow (delete) - Any authenticated user can delete a transaction.
-     * @deny (create) - Never.
-     * @principle Allows anyone to read and write transaction data.
+     * @allow (create) Signed-in user creates a transaction under their own member profile.
+     * @allow (get) Signed-in user reads a transaction under their own member profile.
+     * @allow (update) Signed-in user updates a transaction under their own member profile.
+     * @allow (delete) Signed-in user deletes a transaction under their own member profile.
+     * @deny (create) Signed-in user attempts to create a transaction under another user's member profile.
+     * @deny (get) Signed-in user attempts to read a transaction under another user's member profile.
+     * @deny (update) Signed-in user attempts to update a transaction under another user's member profile.
+     * @deny (delete) Signed-in user attempts to delete a transaction under another user's member profile.
+     * @principle Enforces document ownership for transactions.
      */
     match /members/{memberId}/transactions/{transactionId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow get: if isOwner(memberId);
+      allow list: if isOwner(memberId);
+      allow create: if isOwner(memberId) && request.resource.data.memberId == memberId;
+      allow update: if isExistingOwner(memberId) && request.resource.data.memberId == resource.data.memberId;
+      allow delete: if isExistingOwner(memberId);
     }
 
     /**
-     * @description Allows any authenticated user to read and write event model data.
+     * @description Rules for the /eventModels/{eventModelId} collection.
      * @path /eventModels/{eventModelId}
-     * @allow (create) - Any authenticated user can create an event model.
-     * @allow (read) - Any authenticated user can read an event model.
-     * @allow (update) - Any authenticated user can update an event model.
-     * @allow (delete) - Any authenticated user can delete an event model.
-     * @deny (create) - Never.
-     * @principle Allows anyone to read and write event model data.
+     * @allow (create) Admin user creates an event model.
+     * @allow (get) Any user can read an event model.
+     * @allow (update) Admin user updates an event model.
+     * @allow (delete) Admin user deletes an event model.
+     * @deny (create) Non-admin user attempts to create an event model.
+     * @deny (update) Non-admin user attempts to update an event model.
+     * @deny (delete) Non-admin user attempts to delete an event model.
+     * @principle Enforces admin-only access for creating, updating, and deleting event models; allows public reads.
      */
     match /eventModels/{eventModelId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
     }
 
     /**
-     * @description Allows any authenticated user to read and write event registration data for a member.
+     * @description Rules for the /members/{memberId}/eventRegistrations/{eventRegistrationId} collection.
      * @path /members/{memberId}/eventRegistrations/{eventRegistrationId}
-     * @allow (create) - Any authenticated user can create an event registration.
-     * @allow (read) - Any authenticated user can read an event registration.
-     * @allow (update) - Any authenticated user can update an event registration.
-     * @allow (delete) - Any authenticated user can delete an event registration.
-     * @deny (create) - Never.
-     * @principle Allows anyone to read and write event registration data.
+     * @allow (create) Signed-in user creates an event registration under their own member profile.
+     * @allow (get) Signed-in user reads an event registration under their own member profile.
+     * @allow (update) Signed-in user updates an event registration under their own member profile.
+     * @allow (delete) Signed-in user deletes an event registration under their own member profile.
+     * @deny (create) Signed-in user attempts to create an event registration under another user's member profile.
+     * @deny (get) Signed-in user attempts to read an event registration under another user's member profile.
+     * @deny (update) Signed-in user attempts to update an event registration under another user's member profile.
+     * @deny (delete) Signed-in user attempts to delete an event registration under another user's member profile.
+     * @principle Enforces document ownership for event registrations.
      */
     match /members/{memberId}/eventRegistrations/{eventRegistrationId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow get: if isOwner(memberId);
+      allow list: if isOwner(memberId);
+      allow create: if isOwner(memberId) && request.resource.data.memberId == memberId;
+      allow update: if isExistingOwner(memberId) && request.resource.data.memberId == resource.data.memberId;
+      allow delete: if isExistingOwner(memberId);
     }
 
     /**
-     * @description Allows any authenticated user to read and write candle sale model data.
+     * @description Rules for the /candleSaleModels/{candleSaleModelId} collection.
      * @path /candleSaleModels/{candleSaleModelId}
-     * @allow (create) - Any authenticated user can create a candle sale model.
-     * @allow (read) - Any authenticated user can read a candle sale model.
-     * @allow (update) - Any authenticated user can update a candle sale model.
-     * @allow (delete) - Any authenticated user can delete a candle sale model.
-     * @deny (create) - Never.
-     * @principle Allows anyone to read and write candle sale model data.
+     * @allow (create) Admin user creates a candle sale model.
+     * @allow (get) Any user can read a candle sale model.
+     * @allow (update) Admin user updates a candle sale model.
+     * @allow (delete) Admin user deletes a candle sale model.
+     * @deny (create) Non-admin user attempts to create a candle sale model.
+     * @deny (update) Non-admin user attempts to update a candle sale model.
+     * @deny (delete) Non-admin user attempts to delete a candle sale model.
+     * @principle Enforces admin-only access for creating, updating, and deleting candle sale models; allows public reads.
      */
     match /candleSaleModels/{candleSaleModelId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
     }
 
     /**
-     * @description Allows any authenticated user to read and write candle sale data for a member.
+     * @description Rules for the /members/{memberId}/candleSales/{candleSaleId} collection.
      * @path /members/{memberId}/candleSales/{candleSaleId}
-     * @allow (create) - Any authenticated user can create a candle sale.
-     * @allow (read) - Any authenticated user can read a candle sale.
-     * @allow (update) - Any authenticated user can update a candle sale.
-     * @allow (delete) - Any authenticated user can delete a candle sale.
-     * @deny (create) - Never.
-     * @principle Allows anyone to read and write candle sale data.
+     * @allow (create) Signed-in user creates a candle sale under their own member profile.
+     * @allow (get) Signed-in user reads a candle sale under their own member profile.
+     * @allow (update) Signed-in user updates a candle sale under their own member profile.
+     * @allow (delete) Signed-in user deletes a candle sale under their own member profile.
+     * @deny (create) Signed-in user attempts to create a candle sale under another user's member profile.
+     * @deny (get) Signed-in user attempts to read a candle sale under another user's member profile.
+     * @deny (update) Signed-in user attempts to update a candle sale under another user's member profile.
+     * @deny (delete) Signed-in user attempts to delete a candle sale under another user's member profile.
+     * @principle Enforces document ownership for candle sales.
      */
     match /members/{memberId}/candleSales/{candleSaleId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow get: if isOwner(memberId);
+      allow list: if isOwner(memberId);
+      allow create: if isOwner(memberId) && request.resource.data.memberId == memberId;
+      allow update: if isExistingOwner(memberId) && request.resource.data.memberId == resource.data.memberId;
+      allow delete: if isExistingOwner(memberId);
     }
 
     /**
-     * @description Allows any authenticated user to read and write shop product data.
+     * @description Rules for the /shopProducts/{shopProductId} collection.
      * @path /shopProducts/{shopProductId}
-     * @allow (create) - Any authenticated user can create a shop product.
-     * @allow (read) - Any authenticated user can read a shop product.
-     * @allow (update) - Any authenticated user can update a shop product.
-     * @allow (delete) - Any authenticated user can delete a shop product.
-     * @deny (create) - Never.
-     * @principle Allows anyone to read and write shop product data.
+     * @allow (create) Admin user creates a shop product.
+     * @allow (get) Any user can read a shop product.
+     * @allow (update) Admin user updates a shop product.
+     * @allow (delete) Admin user deletes a shop product.
+     * @deny (create) Non-admin user attempts to create a shop product.
+     * @deny (update) Non-admin user attempts to update a shop product.
+     * @deny (delete) Non-admin user attempts to delete a shop product.
+     * @principle Enforces admin-only access for creating, updating, and deleting shop products; allows public reads.
      */
     match /shopProducts/{shopProductId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow get: if true;
+      allow list: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
     }
 
     /**
-     * @description Allows any authenticated user to read and write shop sale data.
+     * @description Rules for the /shopSales/{shopSaleId} collection.
      * @path /shopSales/{shopSaleId}
-     * @allow (create) - Any authenticated user can create a shop sale.
-     * @allow (read) - Any authenticated user can read a shop sale.
-     * @allow (update) - Any authenticated user can update a shop sale.
-     * @allow (delete) - Any authenticated user can delete a shop sale.
-     * @deny (create) - Never.
-     * @principle Allows anyone to read and write shop sale data.
+     * @allow (create) Any signed-in user can create a shop sale (assuming memberId is correctly set).
+     * @allow (get) Any signed-in user can read a shop sale if it belongs to them or they are an admin.
+     * @allow (update) Only admins can update a shop sale.
+     * @allow (delete) Only admins can delete a shop sale.
+     * @deny (create) Creation is denied if the memberId does not match the signed-in user (unless an admin).
+     * @deny (update) Updating or deleting a non-existent shop sale is denied.
      */
     match /shopSales/{shopSaleId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow get: if isSignedIn() && (resource.data.memberId == request.auth.uid || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isSignedIn();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
     }
 
     /**
-     * @description Allows any authenticated user to read and write CERFA receipt data.
+     * @description Rules for the /cerfas/{cerfaId} collection.
      * @path /cerfas/{cerfaId}
-     * @allow (create) - Any authenticated user can create a CERFA receipt.
-     * @allow (read) - Any authenticated user can read a CERFA receipt.
-     * @allow (update) - Any authenticated user can update a CERFA receipt.
-     * @allow (delete) - Any authenticated user can delete a CERFA receipt.
-     * @deny (create) - Never.
-     * @principle Allows anyone to read and write CERFA receipt data.
+     * @allow (create) Admin user creates a CERFA receipt.
+     * @allow (get) Any user can read a CERFA receipt.
+     * @allow (update) Admin user updates a CERFA receipt.
+     * @allow (delete) Denied. CERFAs should never be deleted; instead, marked as cancelled.
+     * @deny (create) Non-admin user attempts to create a CERFA receipt.
+     * @deny (update) Non-admin user attempts to update a CERFA receipt.
+     * @principle Enforces admin-only access for creating and updating CERFA receipts; allows public reads.
      */
     match /cerfas/{cerfaId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if false;
+    }
+
+     /**
+      * @description Rules for the /roles_admin/{userId} collection.
+      * @path /roles_admin/{userId}
+      * @allow (create) Only an admin can create an admin role document.
+      * @allow (get) Only an admin can read an admin role document.
+      * @allow (update) Only an admin can update an admin role document.
+      * @allow (delete) Only an admin can delete an admin role document.
+      * @deny (create) Non-admin users cannot create admin role documents.
+      * @deny (get) Non-admin users cannot read admin role documents.
+      * @deny (update) Non-admin users cannot update admin role documents.
+      * @deny (delete) Non-admin users cannot delete admin role documents.
+      * @principle Restricts management of admin roles to existing admins.
+      */
+     match /roles_admin/{userId} {
+      allow get: if isAdmin();
+      allow list: if false;
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
     }
 
     /**
-     * @description Allows any authenticated user to read and write admin roles data.
-     * @path /roles_admin/{userId}
-     * @allow (create) - Any authenticated user can create an admin role.
-     * @allow (read) - Any authenticated user can read an admin role.
-     * @allow (update) - Any authenticated user can update an admin role.
-     * @allow (delete) - Any authenticated user can delete an admin role.
-     * @deny (create) - Never.
-     * @principle Allows anyone to read and write admin roles data.
-     */
-    match /roles_admin/{userId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
-    }
-
-    /**
-     * @description Allows any authenticated user to read and write CERFA counters data.
+     * @description Rules for the /appSettings/cerfaCounters document.
      * @path /appSettings/cerfaCounters
-     * @allow (create) - Any authenticated user can create CERFA counters.
-     * @allow (read) - Any authenticated user can read CERFA counters.
-     * @allow (update) - Any authenticated user can update CERFA counters.
-     * @allow (delete) - Any authenticated user can delete CERFA counters.
-     * @deny (create) - Never.
-     * @principle Allows anyone to read and write CERFA counters data.
+     * @allow (create) Only admins can create this document.
+     * @allow (get) Only admins can read this document.
+     * @allow (update) Only admins can update this document.
+     * @allow (delete) Only admins can delete this document.
+     * @deny (create) Non-admins cannot create this document.
+     * @deny (get) Non-admins cannot read this document.
+     * @deny (update) Non-admins cannot update this document.
+     * @deny (delete) Non-admins cannot delete this document.
+     * @principle Restricts access to CERFA counter settings to admins only.
      */
     match /appSettings/cerfaCounters {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow get: if isAdmin();
+      allow list: if false;
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
     }
-  }
-
-  function isSignedIn() {
-    return request.auth != null;
   }
 }

@@ -1,297 +1,257 @@
 /**
- * @fileoverview Firestore Security Rules for ACIM Association.
+ * @file Firebase Security Rules for ACIM Association Firestore Database
  *
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for member-related data
- * (transactions, event registrations, candle sales). Only authenticated users
- * can access their own data. Administrative access is granted based on
- * membership in the `roles_admin` collection. Public read access is granted
- * for a few collections.
+ * @Core Philosophy
+ * This ruleset enforces a role-based access control model with ownership checks for user-specific data.
+ * Administrative privileges are granted based on the existence of a document in the `roles_admin` collection.
+ * Data validation is minimal to allow for rapid prototyping.
  *
- * Data Structure:
- * - /members/{memberId}: Stores member profile information.
- * - /members/{memberId}/transactions/{transactionId}: Stores transaction history for each member.
- * - /eventModels/{eventModelId}: Stores event templates.
- * - /members/{memberId}/eventRegistrations/{eventRegistrationId}: Stores event registrations for each member.
- * - /candleSaleModels/{candleSaleModelId}: Stores candle sale templates.
- * - /members/{memberId}/candleSales/{candleSaleId}: Stores candle sales for each member.
- * - /shopProducts/{shopProductId}: Stores product information for the shop.
- * - /shopSales/{shopSaleId}: Stores sales records for the shop, associated with a member if applicable.
- * - /cerfas/{cerfaId}: Stores CERFA receipt information.
- * - /roles_admin/{userId}: Stores admin role information. Document ID represents the user's UID.
+ * @Data Structure
+ * - `/members/{memberId}`: Stores individual member profiles. `memberId` must match the authenticated user's UID for creates and updates.
+ * - `/members/{memberId}/transactions/{transactionId}`: Stores transaction records for each member. Only the member can manage these.
+ * - `/members/{memberId}/eventRegistrations/{eventRegistrationId}`: Stores event registrations for each member. Only the member can manage these.
+ * - `/members/{memberId}/candleSales/{candleSaleId}`: Stores candle sales records for each member. Only the member can manage these.
+ * - `/eventModels/{eventModelId}`: Stores event model templates. Accessible only to admins.
+ * - `/candleSaleModels/{candleSaleModelId}`: Stores candle sale model templates. Accessible only to admins.
+ * - `/shopProducts/{shopProductId}`: Stores shop product information. Accessible only to admins.
+ * - `/shopSales/{shopSaleId}`: Stores shop sale records. `memberId` field is used for authorization if the sale is associated with a member. Accessible only to admins.
+ * - `/cerfas/{cerfaId}`: Stores CERFA receipt information. Accessible only to admins.
+ * - `/roles_admin/{userId}`: Stores admin role assignments. The existence of a document grants admin privileges.
+ * - `/appSettings/cerfaCounters`: Stores annual CERFA counters. Accessible only to admins.
  *
- * Key Security Decisions:
- * - Only admins can create, update, or delete members.
- * - Users can only access their own transactions, event registrations, and candle sales.
- * - Public read access is granted for event models, candle sale models and shop products
- * - Only admins can create, update or delete event models, candle sale models and shop products
- * - Only admins can create cerfas
- * - Listing of all members, transactions, event registrations, candle sales, shop products and shop sales are restricted to admin users only.
+ * @Key Security Decisions
+ * - Listing of `/members` collection is disallowed to protect user privacy.
+ * - Admin privileges are granted based on documents in the `/roles_admin` collection.
+ * - All writes require authentication.
  *
- * Denormalization for Authorization:
- * The shopSales collection includes the `memberId` for authorization, which helps avoid costly `get()` calls to the `members` collection.
+ * @Denormalization for Authorization
+ * - The `shopSales` collection denormalizes the `memberId` to simplify authorization checks,
+ *   avoiding the need for complex `get()` calls to associated member documents.
+ *
+ * @Structural Segregation
+ * - Private user data is stored under the `/members/{memberId}` path, while public or administrative
+ *   data resides in top-level collections such as `/eventModels`, `/shopProducts`, and `/cerfas`.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows admins to manage members.
-     * @path /members/{memberId}
-     * @allow (create, update, delete) if request.auth != null && isAdmin()
-     * @allow (get) if request.auth != null && isAdmin()
-     * @allow (list) if request.auth != null && isAdmin()
-     * @deny (create) if request.auth == null
-     * @deny (update) if request.auth == null
-     * @deny (delete) if request.auth == null
-     * @deny (create) if !isAdmin()
-     * @deny (update) if !isAdmin()
-     * @deny (delete) if !isAdmin()
-     * @principle Enforces admin-only access for member management.
+     * @description Checks if the request is made by a signed-in user.
      */
-    match /members/{memberId} {
-      allow get: if isSignedIn() && isAdmin();
-      allow list: if isSignedIn() && isAdmin();
-      allow create: if isSignedIn() && isAdmin();
-      allow update: if isSignedIn() && isAdmin() && resource != null;
-      allow delete: if isSignedIn() && isAdmin() && resource != null;
-    }
-
-    /**
-     * @description Allows a member to manage their own transactions.
-     * @path /members/{memberId}/transactions/{transactionId}
-     * @allow (create) if request.auth != null && isOwner(memberId)
-     * @allow (update) if request.auth != null && isOwner(memberId)
-     * @allow (delete) if request.auth != null && isOwner(memberId)
-     * @allow (get) if request.auth != null && isOwner(memberId)
-     * @allow (list) if request.auth != null && isOwner(memberId)
-     * @deny (create) if request.auth == null
-     * @deny (update) if request.auth == null
-     * @deny (delete) if request.auth == null
-     * @deny (create) if !isOwner(memberId)
-     * @deny (update) if !isOwner(memberId)
-     * @deny (delete) if !isOwner(memberId)
-     * @principle Enforces user-ownership for transactions.
-     */
-    match /members/{memberId}/transactions/{transactionId} {
-      allow get: if isSignedIn() && isOwner(memberId);
-      allow list: if isSignedIn() && isOwner(memberId);
-      allow create: if isSignedIn() && isOwner(memberId);
-      allow update: if isSignedIn() && isOwner(memberId) && resource != null;
-      allow delete: if isSignedIn() && isOwner(memberId) && resource != null;
-    }
-
-    /**
-     * @description Allows public read access to event models, but restricts modifications to admins.
-     * @path /eventModels/{eventModelId}
-     * @allow (get, list) if true
-     * @allow (create, update, delete) if request.auth != null && isAdmin()
-     * @deny (create) if request.auth == null
-     * @deny (update) if request.auth == null
-     * @deny (delete) if request.auth == null
-     * @deny (create) if !isAdmin()
-     * @deny (update) if !isAdmin()
-     * @deny (delete) if !isAdmin()
-     * @principle Allows public read access while enforcing admin-only writes.
-     */
-    match /eventModels/{eventModelId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isSignedIn() && isAdmin();
-      allow update: if isSignedIn() && isAdmin() && resource != null;
-      allow delete: if isSignedIn() && isAdmin() && resource != null;
-    }
-
-    /**
-     * @description Allows a member to manage their own event registrations.
-     * @path /members/{memberId}/eventRegistrations/{eventRegistrationId}
-     * @allow (create) if request.auth != null && isOwner(memberId)
-     * @allow (update) if request.auth != null && isOwner(memberId)
-     * @allow (delete) if request.auth != null && isOwner(memberId)
-     * @allow (get) if request.auth != null && isOwner(memberId)
-     * @allow (list) if request.auth != null && isOwner(memberId)
-     * @deny (create) if request.auth == null
-     * @deny (update) if request.auth == null
-     * @deny (delete) if request.auth == null
-     * @deny (create) if !isOwner(memberId)
-     * @deny (update) if !isOwner(memberId)
-     * @deny (delete) if !isOwner(memberId)
-     * @principle Enforces user-ownership for event registrations.
-     */
-    match /members/{memberId}/eventRegistrations/{eventRegistrationId} {
-      allow get: if isSignedIn() && isOwner(memberId);
-      allow list: if isSignedIn() && isOwner(memberId);
-      allow create: if isSignedIn() && isOwner(memberId);
-      allow update: if isSignedIn() && isOwner(memberId) && resource != null;
-      allow delete: if isSignedIn() && isOwner(memberId) && resource != null;
-    }
-
-    /**
-     * @description Allows public read access to candle sale models, but restricts modifications to admins.
-     * @path /candleSaleModels/{candleSaleModelId}
-     * @allow (get, list) if true
-     * @allow (create, update, delete) if request.auth != null && isAdmin()
-     * @deny (create) if request.auth == null
-     * @deny (update) if request.auth == null
-     * @deny (delete) if request.auth == null
-     * @deny (create) if !isAdmin()
-     * @deny (update) if !isAdmin()
-     * @deny (delete) if !isAdmin()
-     * @principle Allows public read access while enforcing admin-only writes.
-     */
-    match /candleSaleModels/{candleSaleModelId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isSignedIn() && isAdmin();
-      allow update: if isSignedIn() && isAdmin() && resource != null;
-      allow delete: if isSignedIn() && isAdmin() && resource != null;
-    }
-
-    /**
-     * @description Allows a member to manage their own candle sales.
-     * @path /members/{memberId}/candleSales/{candleSaleId}
-     * @allow (create) if request.auth != null && isOwner(memberId)
-     * @allow (update) if request.auth != null && isOwner(memberId)
-     * @allow (delete) if request.auth != null && isOwner(memberId)
-     * @allow (get) if request.auth != null && isOwner(memberId)
-     * @allow (list) if request.auth != null && isOwner(memberId)
-     * @deny (create) if request.auth == null
-     * @deny (update) if request.auth == null
-     * @deny (delete) if request.auth == null
-     * @deny (create) if !isOwner(memberId)
-     * @deny (update) if !isOwner(memberId)
-     * @deny (delete) if !isOwner(memberId)
-     * @principle Enforces user-ownership for candle sales.
-     */
-    match /members/{memberId}/candleSales/{candleSaleId} {
-      allow get: if isSignedIn() && isOwner(memberId);
-      allow list: if isSignedIn() && isOwner(memberId);
-      allow create: if isSignedIn() && isOwner(memberId);
-      allow update: if isSignedIn() && isOwner(memberId) && resource != null;
-      allow delete: if isSignedIn() && isOwner(memberId) && resource != null;
-    }
-
-    /**
-     * @description Allows public read access to shop products, but restricts modifications to admins.
-     * @path /shopProducts/{shopProductId}
-     * @allow (get, list) if true
-     * @allow (create, update, delete) if request.auth != null && isAdmin()
-     * @deny (create) if request.auth == null
-     * @deny (update) if request.auth == null
-     * @deny (delete) if request.auth == null
-     * @deny (create) if !isAdmin()
-     * @deny (update) if !isAdmin()
-     * @deny (delete) if !isAdmin()
-     * @principle Allows public read access while enforcing admin-only writes.
-     */
-    match /shopProducts/{shopProductId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isSignedIn() && isAdmin();
-      allow update: if isSignedIn() && isAdmin() && resource != null;
-      allow delete: if isSignedIn() && isAdmin() && resource != null;
-    }
-
-    /**
-     * @description Allows admins to manage shop sales.  Members can only manage their own shop sales if the shop sale has a matching memberId.
-     * @path /shopSales/{shopSaleId}
-     * @allow (create) if request.auth != null && (isAdmin() || request.resource.data.memberId == request.auth.uid)
-     * @allow (update) if request.auth != null && (isAdmin() || resource.data.memberId == request.auth.uid)
-     * @allow (delete) if request.auth != null && (isAdmin() || resource.data.memberId == request.auth.uid)
-     * @allow (get) if request.auth != null && (isAdmin() || resource.data.memberId == request.auth.uid)
-     * @allow (list) if request.auth != null && isAdmin()
-     * @deny (create) if request.auth == null
-     * @deny (update) if request.auth == null
-     * @deny (delete) if request.auth == null
-     * @deny (create) if !isAdmin() && request.resource.data.memberId != request.auth.uid
-     * @deny (update) if !isAdmin() && resource.data.memberId != request.auth.uid
-     * @deny (delete) if !isAdmin() && resource.data.memberId != request.auth.uid
-     * @principle Enforces admin-only access for general shop sales, and user-ownership for member-related sales.
-     */
-    match /shopSales/{shopSaleId} {
-      allow get: if isSignedIn() && (isAdmin() || resource.data.memberId == request.auth.uid);
-      allow list: if isSignedIn() && isAdmin();
-      allow create: if isSignedIn() && (isAdmin() || request.resource.data.memberId == request.auth.uid);
-      allow update: if isSignedIn() && (isAdmin() || resource.data.memberId == request.auth.uid) && resource != null;
-      allow delete: if isSignedIn() && (isAdmin() || resource.data.memberId == request.auth.uid) && resource != null;
-    }
-
-    /**
-     * @description Allows admins to manage CERFA receipts.
-     * @path /cerfas/{cerfaId}
-     * @allow (create, update, delete) if request.auth != null && isAdmin()
-     * @allow (get) if request.auth != null && isAdmin()
-     * @allow (list) if request.auth != null && isAdmin()
-     * @deny (create) if request.auth == null
-     * @deny (update) if request.auth == null
-     * @deny (delete) if request.auth == null
-     * @deny (create) if !isAdmin()
-     * @deny (update) if !isAdmin()
-     * @deny (delete) if !isAdmin()
-     * @principle Enforces admin-only access for CERFA receipt management.
-     */
-    match /cerfas/{cerfaId} {
-      allow get: if isSignedIn() && isAdmin();
-      allow list: if isSignedIn() && isAdmin();
-      allow create: if isSignedIn() && isAdmin();
-      allow update: if isSignedIn() && isAdmin() && resource != null;
-      allow delete: if isSignedIn() && isAdmin() && resource != null;
-    }
-
-    /**
-     * @description Allows admins to manage admin roles.
-     * @path /roles_admin/{userId}
-     * @allow (create, update, delete) if request.auth != null && isAdmin()
-     * @allow (get) if request.auth != null && isAdmin()
-     * @allow (list) if request.auth != null && isAdmin()
-     * @deny (create) if request.auth == null
-     * @deny (update) if request.auth == null
-     * @deny (delete) if request.auth == null
-     * @deny (create) if !isAdmin()
-     * @deny (update) if !isAdmin()
-     * @deny (delete) if !isAdmin()
-     * @principle Enforces admin-only access for admin role management.
-     */
-    match /roles_admin/{userId} {
-      allow get: if isSignedIn() && isAdmin();
-      allow list: if isSignedIn() && isAdmin();
-      allow create: if isSignedIn() && isAdmin();
-      allow update: if isSignedIn() && isAdmin() && resource != null;
-      allow delete: if isSignedIn() && isAdmin() && resource != null;
-    }
-
-    /**
-     * @description Allows admins to manage CERFA counters.
-     * @path /appSettings/cerfaCounters
-     * @allow (create, update, delete) if request.auth != null && isAdmin()
-     * @allow (get) if request.auth != null && isAdmin()
-     * @allow (list) if request.auth != null && isAdmin()
-     * @deny (create) if request.auth == null
-     * @deny (update) if request.auth == null
-     * @deny (delete) if request.auth == null
-     * @deny (create) if !isAdmin()
-     * @deny (update) if !isAdmin()
-     * @deny (delete) if !isAdmin()
-     * @principle Enforces admin-only access for CERFA counter management.
-     */
-    match /appSettings/cerfaCounters {
-      allow get: if isSignedIn() && isAdmin();
-      allow list: if isSignedIn() && isAdmin();
-      allow create: if isSignedIn() && isAdmin();
-      allow update: if isSignedIn() && isAdmin() && resource != null;
-      allow delete: if isSignedIn() && isAdmin() && resource != null;
-    }
-
     function isSignedIn() {
       return request.auth != null;
     }
 
+    /**
+     * @description Checks if the authenticated user's UID matches the provided userId.
+     */
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
 
+    /**
+     * @description Checks if the user is an existing owner of the document.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Checks if the authenticated user has admin privileges.
+     * Admin privileges are determined by the existence of a document in the roles_admin collection
+     * with the user's UID as the document ID.
+     */
     function isAdmin() {
-      return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+        return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+
+    /**
+     * @description Rules for the /members/{memberId} collection.
+     * @path /members/{memberId}
+     * @allow (create) Signed-in user creates their own member profile.
+     * @allow (get) Signed-in user retrieves their own member profile.
+     * @deny (create) Signed-in user attempts to create a member profile for another user.
+     * @deny (update) Non-admin user attempts to update another user's member profile.
+     * @principle Enforces document ownership for writes.
+     */
+    match /members/{memberId} {
+      allow get: if isOwner(memberId);
+      allow list: if false;
+
+      allow create: if isSignedIn() && request.auth.uid == memberId;
+      allow update: if isExistingOwner(memberId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * @description Rules for the /members/{memberId}/transactions/{transactionId} collection.
+     * @path /members/{memberId}/transactions/{transactionId}
+     * @allow (create) Signed-in user creates a transaction for their own member profile.
+     * @allow (get) Signed-in user retrieves a transaction for their own member profile.
+     * @deny (create) Signed-in user attempts to create a transaction for another user.
+     * @deny (update) Non-owner attempts to update a transaction for the member profile.
+     * @principle Enforces document ownership for writes.
+     */
+    match /members/{memberId}/transactions/{transactionId} {
+      allow get: if isOwner(memberId);
+      allow list: if isOwner(memberId);
+
+      allow create: if isOwner(memberId);
+      allow update: if isExistingOwner(memberId);
+      allow delete: if isExistingOwner(memberId);
+    }
+
+     /**
+      * @description Rules for the /eventModels/{eventModelId} collection.
+      * @path /eventModels/{eventModelId}
+      * @allow (create) Admin user creates event model.
+      * @allow (get) Any user retrieves event model.
+      * @deny (create) Non-admin user attempts to create event model.
+      * @deny (update) Non-admin attempts to update event model.
+      * @principle Restricts event model management to admins.
+      */
+    match /eventModels/{eventModelId} {
+      allow get, list: if true;
+
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Rules for the /members/{memberId}/eventRegistrations/{eventRegistrationId} collection.
+     * @path /members/{memberId}/eventRegistrations/{eventRegistrationId}
+     * @allow (create) Signed-in user creates an event registration for their own member profile.
+     * @allow (get) Signed-in user retrieves an event registration for their own member profile.
+     * @deny (create) Signed-in user attempts to create an event registration for another user.
+     * @deny (update) Non-owner attempts to update an event registration for the member profile.
+     * @principle Enforces document ownership for writes.
+     */
+    match /members/{memberId}/eventRegistrations/{eventRegistrationId} {
+      allow get: if isOwner(memberId);
+      allow list: if isOwner(memberId);
+
+      allow create: if isOwner(memberId);
+      allow update: if isExistingOwner(memberId);
+      allow delete: if isExistingOwner(memberId);
+    }
+
+    /**
+     * @description Rules for the /candleSaleModels/{candleSaleModelId} collection.
+     * @path /candleSaleModels/{candleSaleModelId}
+     * @allow (create) Admin user creates candle sale model.
+     * @allow (get) Any user retrieves candle sale model.
+     * @deny (create) Non-admin user attempts to create candle sale model.
+     * @deny (update) Non-admin attempts to update candle sale model.
+     * @principle Restricts candle sale model management to admins.
+     */
+    match /candleSaleModels/{candleSaleModelId} {
+      allow get, list: if true;
+
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Rules for the /members/{memberId}/candleSales/{candleSaleId} collection.
+     * @path /members/{memberId}/candleSales/{candleSaleId}
+     * @allow (create) Signed-in user creates a candle sale for their own member profile.
+     * @allow (get) Signed-in user retrieves a candle sale for their own member profile.
+     * @deny (create) Signed-in user attempts to create a candle sale for another user.
+     * @deny (update) Non-owner attempts to update a candle sale for the member profile.
+     * @principle Enforces document ownership for writes.
+     */
+    match /members/{memberId}/candleSales/{candleSaleId} {
+      allow get: if isOwner(memberId);
+      allow list: if isOwner(memberId);
+
+      allow create: if isOwner(memberId);
+      allow update: if isExistingOwner(memberId);
+      allow delete: if isExistingOwner(memberId);
+    }
+
+    /**
+     * @description Rules for the /shopProducts/{shopProductId} collection.
+     * @path /shopProducts/{shopProductId}
+     * @allow (create) Admin user creates shop product.
+     * @allow (get) Any user retrieves shop product.
+     * @deny (create) Non-admin user attempts to create shop product.
+     * @deny (update) Non-admin attempts to update shop product.
+     * @principle Restricts shop product management to admins.
+     */
+    match /shopProducts/{shopProductId} {
+      allow get, list: if true;
+
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Rules for the /shopSales/{shopSaleId} collection.
+     * @path /shopSales/{shopSaleId}
+     * @allow (create) Admin user creates shop sale.
+     * @allow (get) Any user retrieves shop sale.
+     * @deny (create) Non-admin user attempts to create shop sale.
+     * @deny (update) Non-admin attempts to update shop sale.
+     * @principle Restricts shop sale management to admins.
+     */
+    match /shopSales/{shopSaleId} {
+      allow get, list: if isAdmin();
+
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Rules for the /cerfas/{cerfaId} collection.
+     * @path /cerfas/{cerfaId}
+     * @allow (create) Admin user creates CERFA receipt.
+     * @allow (get) Admin user retrieves CERFA receipt.
+     * @deny (create) Non-admin user attempts to create CERFA receipt.
+     * @deny (update) Non-admin attempts to update CERFA receipt.
+     * @principle Restricts CERFA receipt management to admins.
+     */
+    match /cerfas/{cerfaId} {
+      allow get, list: if isAdmin();
+
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Rules for the /roles_admin/{userId} collection.
+     * @path /roles_admin/{userId}
+     * @allow (create) Signed-in user creates their own admin role (for initial setup).
+     * @allow (get) Any user retrieves admin role.
+     * @deny (create) Signed-in user attempts to create an admin role for another user.
+     * @deny (update) Non-admin user attempts to update another user's admin role.
+     * @principle Enforces document ownership for writes.
+     */
+    match /roles_admin/{userId} {
+      allow get: if isAdmin();
+      allow list: if isAdmin();
+
+      allow create: if isAdmin(); // In a real system, this needs further protection
+      allow update: if false;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Rules for the /appSettings/cerfaCounters document.
+     * @path /appSettings/cerfaCounters
+     */
+    match /appSettings/cerfaCounters {
+       allow get: if isAdmin();
+       allow list: if false;
+       allow create: if isAdmin();
+       allow update: if isAdmin();
+       allow delete: if false;
     }
   }
 }

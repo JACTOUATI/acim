@@ -19,7 +19,7 @@ import { useUser } from "@/firebase/provider";
 import { Button } from "@/components/ui/button";
 import { getAuth, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { Home, Users, LogOut, ChevronDown } from "lucide-react";
+import { Home, Users, LogOut, ChevronDown, Settings } from "lucide-react";
 import Image from "next/image";
 import { DashboardHeader } from "./header";
 
@@ -74,10 +74,15 @@ export default function DashboardLayout({
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton href="/dashboard/members" isActive>
-                <Users />
-                Membres
+              <SidebarMenuButton>
+                <Settings />
+                Paramètres
               </SidebarMenuButton>
+              <SidebarMenuSub>
+                <SidebarMenuSubItem>
+                  <SidebarMenuSubButton href="/dashboard/members" isActive>Membres</SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              </SidebarMenuSub>
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton>

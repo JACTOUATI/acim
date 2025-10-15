@@ -29,7 +29,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { addDocumentNonBlocking, useFirestore } from "@/firebase";
+import { useFirestore, addDocumentNonBlocking } from "@/firebase";
 import { collection } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 
@@ -72,7 +72,7 @@ export function AddMemberDialog({
   const onSubmit = (values: z.infer<typeof memberSchema>) => {
     if (!firestore) return;
     const membersCollection = collection(firestore, "members");
-    addDocumentNonBlocking(membersCollection, values)
+    addDocumentNonBlocking(membersCollection, values);
     toast({
         title: "Membre ajouté",
         description: `${values.name} a été ajouté à la liste des membres.`,

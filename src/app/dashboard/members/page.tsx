@@ -100,7 +100,7 @@ export default function MembersPage() {
           const memberData = {
             name: row["Nom"] || "",
             email: row["Email"] || "",
-            phone: String(row["Téléphone"] || ""),
+            phone: String(row["Phone"] || ""),
             address: row["Adresse"] || "",
             status: row["Statut"] === "Actif" ? "Actif" : "Inactif",
             role: row["Rôle"] === "admin" ? "admin" : "membre",
@@ -201,7 +201,7 @@ export default function MembersPage() {
                         />
                     </div>
                      <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-[180px]">
+                      <SelectTrigger className="w-[200px]">
                         <SelectValue placeholder="Filtrer par statut" />
                       </SelectTrigger>
                       <SelectContent>
@@ -211,7 +211,7 @@ export default function MembersPage() {
                       </SelectContent>
                     </Select>
                     <Select value={docFilter} onValueChange={setDocFilter}>
-                      <SelectTrigger className="w-[180px]">
+                      <SelectTrigger className="w-[200px]">
                         <SelectValue placeholder="Filtrer par doc" />
                       </SelectTrigger>
                       <SelectContent>

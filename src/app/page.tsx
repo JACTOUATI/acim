@@ -34,7 +34,6 @@ export default function LoginPage() {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const auth = useAuth();
@@ -59,7 +58,7 @@ export default function LoginPage() {
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!signupName || !signupEmail || !signupPassword) {
+    if (!signupEmail || !signupPassword) {
         toast({ variant: "destructive", title: "Erreur", description: "Veuillez remplir tous les champs." });
         return;
     }
@@ -128,10 +127,6 @@ export default function LoginPage() {
                   </TabsContent>
                   <TabsContent value="signup">
                     <form className="space-y-4 pt-4" onSubmit={handleSignup}>
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-name">Nom complet</Label>
-                        <Input id="signup-name" type="text" placeholder="Votre nom" required value={signupName} onChange={(e) => setSignupName(e.target.value)} />
-                      </div>
                       <div className="space-y-2">
                         <Label htmlFor="signup-email">Email</Label>
                         <Input id="signup-email" type="email" placeholder="email@example.com" required value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} />

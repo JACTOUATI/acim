@@ -80,7 +80,7 @@ export default function MembersPage() {
           const memberData = {
             name: row["Nom"] || "",
             email: row["Email"] || "",
-            phone: row["Téléphone"] || "",
+            phone: String(row["Téléphone"] || ""),
             address: row["Adresse"] || "",
             status: row["Statut"] === "Actif" ? "Actif" : "Inactif",
             role: row["Rôle"] === "admin" ? "admin" : "membre",

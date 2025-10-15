@@ -36,7 +36,7 @@ export default function LoginPage() {
           {/* Left: Image */}
           <div className="col-span-1 flex items-center justify-center">
              <Image
-                src="/mur.jpeg"
+                src="/mur.jpg"
                 alt="Mur des lamentations"
                 width={400}
                 height={600}

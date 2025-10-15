@@ -19,20 +19,21 @@ import { useUser } from "@/firebase/provider";
 import { Button } from "@/components/ui/button";
 import { getAuth, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { Home, Users, LogOut, ChevronDown, Settings } from "lucide-react";
+import { Home, Users, LogOut, ChevronDown, Settings, CreditCard, ShoppingCart, Calendar, Gift } from "lucide-react";
 import Image from "next/image";
 import { DashboardHeader } from "./header";
 
 function AcimLogo() {
   return (
-    <div className="flex flex-col items-center text-center">
+    <div className="flex items-center gap-3">
       <Image
         src="/etoile.png"
         alt="ACIM Logo"
-        width={40}
-        height={40}
-        className="h-10 w-10"
+        width={32}
+        height={32}
+        className="h-8 w-8"
       />
+      <h1 className="text-xl font-bold text-primary">ACIM</h1>
     </div>
   );
 }
@@ -60,34 +61,27 @@ export default function DashboardLayout({
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader>
-            <div className="flex items-center gap-2">
-                <AcimLogo />
-                <h1 className="text-xl font-semibold">ACIM</h1>
-            </div>
+          <AcimLogo />
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton href="/dashboard">
+              <SidebarMenuButton href="/dashboard" tooltip="Accueil">
                 <Home />
                 Accueil
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton>
-                <Settings />
-                Paramètres
+              <SidebarMenuButton href="/dashboard/members" tooltip="Membres">
+                <Users />
+                Membres
               </SidebarMenuButton>
-              <SidebarMenuSub>
-                <SidebarMenuSubItem>
-                  <SidebarMenuSubButton href="/dashboard/members" isActive>Membres</SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-              </SidebarMenuSub>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton>
-                <ChevronDown />
+              <SidebarMenuButton tooltip="Transactions">
+                <CreditCard />
                 Transactions
+                <ChevronDown className="ml-auto h-4 w-4" />
               </SidebarMenuButton>
               <SidebarMenuSub>
                 <SidebarMenuSubItem>
@@ -98,22 +92,41 @@ export default function DashboardLayout({
                 </SidebarMenuSubItem>
               </SidebarMenuSub>
             </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton href="#" tooltip="Événements">
+                <Calendar />
+                Événements
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton href="#" tooltip="Vente de bougies">
+                <Gift />
+                Vente de bougies
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton href="#" tooltip="Boutique">
+                <ShoppingCart />
+                Boutique
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
             {user && (
-                 <div className="flex items-center gap-2 p-2 rounded-md bg-gray-100 dark:bg-gray-800">
+                 <div className="flex items-center gap-3 p-2">
                     <Avatar className="h-9 w-9">
                         <AvatarImage src={user.photoURL ?? ''} alt="User avatar" />
                         <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col text-sm">
-                        <span className="font-medium">{user.displayName ?? user.email}</span>
+                        <span className="font-medium text-foreground">{user.displayName ?? user.email}</span>
+                        <span className="text-xs text-muted-foreground">Admin</span>
                     </div>
                 </div>
             )}
            
-          <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
+          <Button variant="ghost" className="w-full justify-start text-muted-foreground" onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />
             Se déconnecter
           </Button>
@@ -121,9 +134,9 @@ export default function DashboardLayout({
       </Sidebar>
       <SidebarInset>
         <DashboardHeader />
-        <div className="p-4">
+        <main className="p-4 lg:p-6">
             {children}
-        </div>
+        </main>
       </SidebarInset>
     </SidebarProvider>
   );

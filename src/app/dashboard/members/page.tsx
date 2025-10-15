@@ -10,6 +10,7 @@ import { useFirestore, addDocumentNonBlocking } from "@/firebase";
 import { collection } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export default function MembersPage() {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
@@ -86,23 +87,14 @@ export default function MembersPage() {
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4 gap-4">
-        <h1 className="text-3xl font-bold">Membres</h1>
-        <div className="flex-1 max-w-sm">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Rechercher par nom, email, mémo..."
-              className="pl-8"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+    <>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+            <h1 className="text-2xl font-bold">Membres</h1>
+            <p className="text-muted-foreground">Gérez les membres de votre association.</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={handleImportClick}>
+          <Button variant="outline" onClick={handleImportClick}>
             <Upload className="mr-2 h-4 w-4" />
             Importer
           </Button>
@@ -112,7 +104,33 @@ export default function MembersPage() {
           </Button>
         </div>
       </div>
-      <MembersTable searchTerm={searchTerm} />
+      
+      <Card>
+        <CardHeader>
+            <div className="flex justify-between items-center">
+                <div>
+                    <CardTitle>Liste des membres</CardTitle>
+                    <CardDescription>Recherchez et gérez les membres existants.</CardDescription>
+                </div>
+                <div className="w-full max-w-sm">
+                    <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                        type="search"
+                        placeholder="Rechercher par nom, email, mémo..."
+                        className="pl-8 bg-background"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+            <MembersTable searchTerm={searchTerm} />
+        </CardContent>
+      </Card>
+      
       <AddMemberDialog
         isOpen={isAddMemberOpen}
         onOpenChange={setIsAddMemberOpen}
@@ -124,6 +142,6 @@ export default function MembersPage() {
         className="hidden"
         accept=".xlsx, .xls"
       />
-    </div>
+    </>
   );
 }

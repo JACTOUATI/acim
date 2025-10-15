@@ -67,60 +67,63 @@ export function MembersTable({ searchTerm }: MembersTableProps) {
 
   return (
     <>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nom</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Téléphone</TableHead>
-            <TableHead>Statut</TableHead>
-            <TableHead>Doc</TableHead>
-            <TableHead>Memo</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredMembers?.map((member) => (
-            <TableRow key={member.id}>
-              <TableCell className="font-medium">{member.name}</TableCell>
-              <TableCell>{member.email}</TableCell>
-              <TableCell>{member.phone}</TableCell>
-              <TableCell>
-                <Badge
-                  variant={member.status === "Actif" ? "default" : "secondary"}
-                >
-                  {member.status}
-                </Badge>
-              </TableCell>
-              <TableCell>{member.doc}</TableCell>
-              <TableCell className="max-w-[150px] truncate">
-                {member.memo}
-              </TableCell>
-              <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    // onClick={() => handleEditClick(member)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                    <span className="sr-only">Modifier</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteClick(member)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    <span className="sr-only">Supprimer</span>
-                  </Button>
-                </div>
-              </TableCell>
+      <div className="border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nom</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Téléphone</TableHead>
+              <TableHead>Statut</TableHead>
+              <TableHead>Doc</TableHead>
+              <TableHead>Memo</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {filteredMembers?.map((member) => (
+              <TableRow key={member.id}>
+                <TableCell className="font-medium">{member.name}</TableCell>
+                <TableCell>{member.email}</TableCell>
+                <TableCell>{member.phone}</TableCell>
+                <TableCell>
+                  <Badge
+                    variant={member.status === "Actif" ? "default" : "secondary"}
+                    className={member.status === 'Actif' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
+                  >
+                    {member.status}
+                  </Badge>
+                </TableCell>
+                <TableCell>{member.doc}</TableCell>
+                <TableCell className="max-w-[150px] truncate">
+                  {member.memo}
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      // onClick={() => handleEditClick(member)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                      <span className="sr-only">Modifier</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteClick(member)}
+                      className="text-destructive hover:text-destructive/90"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Supprimer</span>
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
       {selectedMember && (
         <DeleteMemberDialog
           isOpen={isDeleteDialogOpen}

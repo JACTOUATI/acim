@@ -11,7 +11,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useFirestore } from "@/firebase";
 import { DeleteMemberDialog } from "./delete-member-dialog";
 
 export type Member = {

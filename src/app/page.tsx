@@ -31,7 +31,7 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-blue-50 p-4">
       <div className="w-full max-w-6xl">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3 md:items-stretch">
           {/* Left: Image */}
           <div className="col-span-1 flex items-center justify-center">
              <Image
@@ -39,18 +39,18 @@ export default function LoginPage() {
                 alt="Mur des lamentations"
                 width={400}
                 height={600}
-                className="rounded-xl object-cover shadow-lg"
+                className="rounded-xl object-cover shadow-lg h-full w-full"
             />
           </div>
 
           {/* Middle: Login/Signup Form */}
-          <div className="col-span-1">
-            <Card className="w-full max-w-md mx-auto">
+          <div className="col-span-1 flex">
+            <Card className="w-full max-w-md mx-auto flex flex-col">
               <CardHeader className="items-center text-center">
                  <AcimLogo />
                  <CardDescription>Connectez-vous ou créez votre compte</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex-grow">
                 <Tabs defaultValue="login" className="w-full">
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="login">Se connecter</TabsTrigger>
@@ -108,13 +108,13 @@ export default function LoginPage() {
           </div>
 
           {/* Right: Donation Card */}
-          <div className="col-span-1 flex items-center justify-center">
-            <Card className="w-full max-w-sm">
+          <div className="col-span-1 flex">
+            <Card className="w-full max-w-sm flex flex-col">
               <CardHeader className="text-center">
                 <CardTitle className="text-xl font-bold">Faire un don</CardTitle>
                 <CardDescription>Soutenez notre association</CardDescription>
               </CardHeader>
-              <CardContent className="flex flex-col items-center text-center space-y-6">
+              <CardContent className="flex flex-col flex-grow items-center text-center justify-center space-y-6">
                 <Heart className="h-16 w-16 text-green-500" strokeWidth={1} />
                 <p className="text-sm text-gray-600">
                   Votre générosité nous aide à poursuivre nos actions. Chaque contribution, petite ou grande, fait une réelle différence.

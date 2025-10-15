@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Table,
   TableHeader,
@@ -19,11 +19,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import {
-  useCollection,
-  useFirestore,
-  useMemoFirebase,
-} from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy } from "firebase/firestore";
 import { DeleteMemberDialog } from "./delete-member-dialog";
 
@@ -37,7 +33,11 @@ type Member = {
   memo?: string;
 };
 
-export function MembersTable() {
+type MembersTableProps = {
+  searchTerm: string;
+};
+
+export function MembersTable({ searchTerm }: MembersTableProps) {
   const firestore = useFirestore();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
@@ -50,6 +50,19 @@ export function MembersTable() {
     [firestore]
   );
   const { data: members, isLoading } = useCollection<Member>(membersQuery);
+
+  const filteredMembers = useMemo(() => {
+    if (!members) return [];
+    if (!searchTerm) return members;
+
+    return members.filter(
+      (member) =>
+        member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (member.memo &&
+          member.memo.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  }, [members, searchTerm]);
 
   const handleDeleteClick = (member: Member) => {
     setSelectedMember(member);
@@ -77,7 +90,7 @@ export function MembersTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {members?.map((member) => (
+          {filteredMembers?.map((member) => (
             <TableRow key={member.id}>
               <TableCell className="font-medium">{member.name}</TableCell>
               <TableCell>{member.email}</TableCell>
@@ -90,7 +103,9 @@ export function MembersTable() {
                 </Badge>
               </TableCell>
               <TableCell>{member.doc}</TableCell>
-              <TableCell className="max-w-[150px] truncate">{member.memo}</TableCell>
+              <TableCell className="max-w-[150px] truncate">
+                {member.memo}
+              </TableCell>
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

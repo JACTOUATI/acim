@@ -6,7 +6,7 @@ import { MembersTable } from "./members-table";
 import { AddMemberDialog } from "./add-member-dialog";
 import React, { useState, useRef, useMemo } from "react";
 import * as XLSX from "xlsx";
-import { useFirestore, addDocumentNonBlocking, useCollection } from "@/firebase";
+import { useFirestore, addDocumentNonBlocking, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,7 @@ export default function MembersPage() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const membersQuery = useMemo(
+  const membersQuery = useMemoFirebase(
     () =>
       firestore
         ? query(collection(firestore, "members"), orderBy("name", "asc"))

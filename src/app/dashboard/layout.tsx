@@ -9,7 +9,6 @@ import {
   SidebarInset,
   SidebarFooter,
   SidebarProvider,
-  SidebarTrigger,
   SidebarContent,
   SidebarMenuSub,
   SidebarMenuSubItem,
@@ -20,8 +19,9 @@ import { useUser } from "@/firebase/provider";
 import { Button } from "@/components/ui/button";
 import { getAuth, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { Home, Users, Settings, LogOut, ChevronDown } from "lucide-react";
+import { Home, Users, LogOut, ChevronDown } from "lucide-react";
 import Image from "next/image";
+import { DashboardHeader } from "./header";
 
 function AcimLogo() {
   return (
@@ -42,7 +42,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isUserLoading } = useUser();
+  const { user } = useUser();
   const router = useRouter();
 
   const handleLogout = () => {
@@ -115,6 +115,7 @@ export default function DashboardLayout({
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
+        <DashboardHeader />
         <div className="p-4">
             {children}
         </div>

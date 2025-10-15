@@ -44,7 +44,7 @@ export default function MembersPage() {
       const statusMatch =
         statusFilter === "Tous" || member.status === statusFilter;
 
-      const docMatch = docFilter === "Tous" || member.doc === docFilter;
+      const docMatch = docFilter === "Tous" || (docFilter === "none" ? member.doc === "" || !member.doc : member.doc === docFilter);
 
       return searchMatch && statusMatch && docMatch;
     });
@@ -195,7 +195,7 @@ export default function MembersPage() {
                         <SelectItem value="Tous">Tous les docs</SelectItem>
                         <SelectItem value="M">M</SelectItem>
                         <SelectItem value="C">C</SelectItem>
-                         <SelectItem value="">Aucun</SelectItem>
+                         <SelectItem value="none">Aucun</SelectItem>
                       </SelectContent>
                     </Select>
                 </div>

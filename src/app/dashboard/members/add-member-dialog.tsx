@@ -41,7 +41,7 @@ const memberSchema = z.object({
   address: z.string().optional(),
   status: z.enum(["Actif", "Inactif"]),
   role: z.enum(["admin", "membre"]),
-  doc: z.enum(["M", "C", ""]).optional(),
+  doc: z.enum(["M", "C", "none", ""]).optional(),
   memo: z.string().optional(),
 });
 
@@ -65,15 +65,21 @@ export function AddMemberDialog({
       address: "",
       status: "Actif",
       role: "membre",
-      doc: "",
+      doc: "none",
       memo: "",
     },
   });
 
   const onSubmit = (values: z.infer<typeof memberSchema>) => {
     if (!firestore) return;
+    
+    const dataToSave = {
+        ...values,
+        doc: values.doc === "none" ? "" : values.doc,
+    };
+
     const membersCollection = collection(firestore, "members");
-    addDocumentNonBlocking(membersCollection, values);
+    addDocumentNonBlocking(membersCollection, dataToSave);
     toast({
         title: "Membre ajouté",
         description: `${values.name} a été ajouté à la liste des membres.`,
@@ -173,14 +179,14 @@ export function AddMemberDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Doc</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value}>
+                   <Select onValueChange={field.onChange} defaultValue={field.value || "none"}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Sélectionner un type de doc" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Aucun</SelectItem>
+                      <SelectItem value="none">Aucun</SelectItem>
                       <SelectItem value="M">M</SelectItem>
                       <SelectItem value="C">C</SelectItem>
                     </SelectContent>

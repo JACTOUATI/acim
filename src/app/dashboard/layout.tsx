@@ -12,6 +12,7 @@ import {
   SidebarTrigger,
   SidebarContent,
   SidebarMenuSub,
+  SidebarMenuSubItem,
   SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

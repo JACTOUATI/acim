@@ -189,21 +189,19 @@ export default function MembersPage() {
                     <CardTitle>Liste des membres</CardTitle>
                     <CardDescription>Recherchez, filtrez et gérez les membres existants.</CardDescription>
                 </div>
-                <div className="flex gap-2">
-                    <div className="w-full max-w-sm">
-                        <div className="relative">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                            type="search"
-                            placeholder="Nom, Email, Memo"
-                            className="pl-8 bg-background"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
+                <div className="flex items-center gap-2">
+                    <div className="relative w-full max-w-xs">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                        type="search"
+                        placeholder="Nom, Email, Memo"
+                        className="pl-8 bg-background"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        />
                     </div>
                      <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-[180px]">
+                      <SelectTrigger className="w-[200px]">
                         <SelectValue placeholder="Filtrer par statut" />
                       </SelectTrigger>
                       <SelectContent>
@@ -213,7 +211,7 @@ export default function MembersPage() {
                       </SelectContent>
                     </Select>
                     <Select value={docFilter} onValueChange={setDocFilter}>
-                      <SelectTrigger className="w-[180px]">
+                      <SelectTrigger className="w-[200px]">
                         <SelectValue placeholder="Filtrer par doc" />
                       </SelectTrigger>
                       <SelectContent>

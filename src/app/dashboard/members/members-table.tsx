@@ -33,6 +33,8 @@ type Member = {
   email: string;
   phone: string;
   status: "Actif" | "Inactif";
+  doc?: string;
+  memo?: string;
 };
 
 export function MembersTable() {
@@ -67,6 +69,8 @@ export function MembersTable() {
             <TableHead>Email</TableHead>
             <TableHead>Téléphone</TableHead>
             <TableHead>Statut</TableHead>
+            <TableHead>Doc</TableHead>
+            <TableHead>Memo</TableHead>
             <TableHead>
               <span className="sr-only">Actions</span>
             </TableHead>
@@ -85,6 +89,8 @@ export function MembersTable() {
                   {member.status}
                 </Badge>
               </TableCell>
+              <TableCell>{member.doc}</TableCell>
+              <TableCell className="max-w-[150px] truncate">{member.memo}</TableCell>
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -40,7 +41,7 @@ const memberSchema = z.object({
   address: z.string().optional(),
   status: z.enum(["Actif", "Inactif"]),
   role: z.enum(["admin", "membre"]),
-  doc: z.enum(["M", "C", ""]),
+  doc: z.enum(["M", "C", ""]).optional(),
   memo: z.string().optional(),
 });
 
@@ -134,6 +135,19 @@ export function AddMemberDialog({
             />
             <FormField
               control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Adresse</FormLabel>
+                  <FormControl>
+                    <Input placeholder="123 rue de Paris" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="status"
               render={({ field }) => (
                 <FormItem>
@@ -149,6 +163,41 @@ export function AddMemberDialog({
                       <SelectItem value="Inactif">Inactif</SelectItem>
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="doc"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Doc</FormLabel>
+                   <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner un type de doc" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="">Aucun</SelectItem>
+                      <SelectItem value="M">M</SelectItem>
+                      <SelectItem value="C">C</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="memo"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Memo</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Notes complémentaires..." {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import {
   Table,
   TableHeader,
@@ -11,11 +11,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy } from "firebase/firestore";
+import { useFirestore } from "@/firebase";
 import { DeleteMemberDialog } from "./delete-member-dialog";
 
-type Member = {
+export type Member = {
   id: string;
   name: string;
   email: string;
@@ -26,35 +25,13 @@ type Member = {
 };
 
 type MembersTableProps = {
-  searchTerm: string;
+  members: Member[];
+  isLoading: boolean;
 };
 
-export function MembersTable({ searchTerm }: MembersTableProps) {
-  const firestore = useFirestore();
+export function MembersTable({ members, isLoading }: MembersTableProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-
-  const membersQuery = useMemoFirebase(
-    () =>
-      firestore
-        ? query(collection(firestore, "members"), orderBy("name", "asc"))
-        : null,
-    [firestore]
-  );
-  const { data: members, isLoading } = useCollection<Member>(membersQuery);
-
-  const filteredMembers = useMemo(() => {
-    if (!members) return [];
-    if (!searchTerm) return members;
-
-    return members.filter(
-      (member) =>
-        member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (member.memo &&
-          member.memo.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-  }, [members, searchTerm]);
 
   const handleDeleteClick = (member: Member) => {
     setSelectedMember(member);
@@ -63,6 +40,10 @@ export function MembersTable({ searchTerm }: MembersTableProps) {
 
   if (isLoading) {
     return <div>Chargement des membres...</div>;
+  }
+  
+  if (!members || members.length === 0) {
+    return <div className="text-center py-8">Aucun membre trouvé.</div>
   }
 
   return (
@@ -81,7 +62,7 @@ export function MembersTable({ searchTerm }: MembersTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredMembers?.map((member) => (
+            {members.map((member) => (
               <TableRow key={member.id}>
                 <TableCell className="font-medium">{member.name}</TableCell>
                 <TableCell>{member.email}</TableCell>

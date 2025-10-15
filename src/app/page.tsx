@@ -48,7 +48,6 @@ export default function LoginPage() {
             <Card className="w-full max-w-md mx-auto">
               <CardHeader className="items-center text-center">
                  <AcimLogo />
-                 <CardTitle className="text-2xl font-bold">ACIM</CardTitle>
                  <CardDescription>Connectez-vous ou créez votre compte</CardDescription>
               </CardHeader>
               <CardContent>

@@ -73,7 +73,10 @@ export function MembersTable({ members, isLoading }: MembersTableProps) {
           <TableBody>
             {members.map((member) => (
               <TableRow key={member.id}>
-                <TableCell className="font-medium">{member.name}</TableCell>
+                <TableCell className="font-medium">
+                  <div>{member.name}</div>
+                  {member.address && <div className="text-xs text-muted-foreground">{member.address}</div>}
+                </TableCell>
                 <TableCell>{member.email}</TableCell>
                 <TableCell>{member.phone}</TableCell>
                 <TableCell>
@@ -131,4 +134,3 @@ export function MembersTable({ members, isLoading }: MembersTableProps) {
     </>
   );
 }
-

@@ -120,7 +120,7 @@ export function AddMemberDialog({
                     <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                        <Input placeholder="email@example.com" {...field} autoFocus />
+                        <Input placeholder="email@example.com" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -167,6 +167,27 @@ export function AddMemberDialog({
                         <SelectContent>
                         <SelectItem value="Actif">Actif</SelectItem>
                         <SelectItem value="Inactif">Inactif</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Rôle</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Sélectionner un rôle" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        <SelectItem value="membre">Membre</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
                         </SelectContent>
                     </Select>
                     <FormMessage />

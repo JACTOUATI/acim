@@ -65,6 +65,7 @@ export function MembersTable({ members, isLoading }: MembersTableProps) {
               <TableHead>Email</TableHead>
               <TableHead>Téléphone</TableHead>
               <TableHead>Statut</TableHead>
+              <TableHead>Rôle</TableHead>
               <TableHead>Doc</TableHead>
               <TableHead>Memo</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -87,6 +88,7 @@ export function MembersTable({ members, isLoading }: MembersTableProps) {
                     {member.status}
                   </Badge>
                 </TableCell>
+                <TableCell>{member.role}</TableCell>
                 <TableCell>{member.doc}</TableCell>
                 <TableCell className="max-w-[150px] truncate">
                   {member.memo}

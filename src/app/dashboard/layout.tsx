@@ -22,6 +22,7 @@ import { getAuth, signOut } from "firebase/auth";
 import { useRouter, usePathname } from "next/navigation";
 import { Home, Users, LogOut, ChevronDown, Settings, CreditCard, ShoppingCart, Calendar, Gift } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { DashboardHeader } from "./header";
 
 function AcimLogo() {
@@ -71,16 +72,20 @@ export default function DashboardLayout({
         <SidebarContent>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton href="/dashboard" tooltip="Accueil" isActive={isLinkActive('/dashboard')}>
-                <Home />
-                Accueil
-              </SidebarMenuButton>
+                <Link href="/dashboard" passHref>
+                    <SidebarMenuButton asChild tooltip="Accueil" isActive={isLinkActive('/dashboard')}>
+                        <Home />
+                        Accueil
+                    </SidebarMenuButton>
+                </Link>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton href="/dashboard/members" tooltip="Membres" isActive={isLinkActive('/dashboard/members')}>
-                <Users />
-                Membres
-              </SidebarMenuButton>
+                <Link href="/dashboard/members" passHref>
+                    <SidebarMenuButton asChild tooltip="Membres" isActive={isLinkActive('/dashboard/members')}>
+                        <Users />
+                        Membres
+                    </SidebarMenuButton>
+                </Link>
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton tooltip="Transactions">
@@ -146,4 +151,3 @@ export default function DashboardLayout({
     </SidebarProvider>
   );
 }
-

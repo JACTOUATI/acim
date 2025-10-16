@@ -35,7 +35,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const memberSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
-  email: z.string().email("L'adresse email est invalide"),
+  email: z.string().email("L'adresse email est invalide").or(z.literal("")).optional(),
   phone: z.string().optional(),
   address: z.string().optional(),
   status: z.enum(["Actif", "Inactif"]),

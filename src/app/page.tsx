@@ -109,12 +109,12 @@ function SignupForm() {
 
 function DonationCard() {
     return (
-        <Card className="w-full bg-white/60 backdrop-blur-sm border-none shadow-none">
+        <Card className="w-full h-full flex flex-col bg-white/60 backdrop-blur-sm border-none shadow-none">
             <CardHeader className="text-center">
                 <CardTitle className="text-xl">Faire un don</CardTitle>
                 <CardDescription>Soutenez notre association</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col items-center text-center gap-4">
+            <CardContent className="flex flex-col flex-1 items-center justify-center text-center gap-4">
                 <Heart className="h-20 w-20 text-green-500" strokeWidth={1} />
                 <p className="text-sm text-muted-foreground">
                     Votre générosité nous aide à poursuivre nos actions. Chaque contribution, petite ou grande, fait une réelle différence.
@@ -148,21 +148,21 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4 lg:p-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto w-full items-stretch">
             
             {/* Left Column: Image */}
-            <div className="hidden lg:flex items-center justify-center">
+            <div className="hidden lg:flex items-stretch justify-center">
                 <Image 
                     src="/mur.jpg"
                     alt="Mur des lamentations"
                     width={400}
                     height={600}
-                    className="rounded-xl shadow-2xl object-cover w-full h-full max-h-[600px]"
+                    className="rounded-xl shadow-2xl object-cover w-full h-full"
                 />
             </div>
 
             {/* Middle Column: Login Form */}
-             <main className="w-full max-w-md mx-auto col-span-1">
+             <main className="w-full max-w-md mx-auto col-span-1 flex items-center">
                 <Card className="w-full shadow-2xl">
                 <CardHeader className="items-center">
                     <AcimLogo />
@@ -186,7 +186,7 @@ export default function LoginPage() {
             </main>
 
             {/* Right Column: Donation */}
-            <div className="hidden lg:flex items-center justify-center">
+            <div className="hidden lg:flex items-stretch justify-center">
                  <DonationCard />
             </div>
 

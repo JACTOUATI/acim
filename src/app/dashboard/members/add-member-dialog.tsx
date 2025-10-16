@@ -120,7 +120,7 @@ export function AddMemberDialog({
                     <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                        <Input placeholder="email@example.com" {...field} />
+                        <Input placeholder="email@example.com" {...field} autoFocus />
                     </FormControl>
                     <FormMessage />
                     </FormItem>

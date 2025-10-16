@@ -72,16 +72,16 @@ export default function DashboardLayout({
         <SidebarContent>
           <SidebarMenu>
             <SidebarMenuItem>
-                <Link href="/dashboard" passHref legacyBehavior>
-                    <SidebarMenuButton as="a" tooltip="Accueil" isActive={isLinkActive('/dashboard')}>
+                <Link href="/dashboard">
+                    <SidebarMenuButton tooltip="Accueil" isActive={isLinkActive('/dashboard')}>
                         <Home />
                         Accueil
                     </SidebarMenuButton>
                 </Link>
             </SidebarMenuItem>
             <SidebarMenuItem>
-                <Link href="/dashboard/members" passHref legacyBehavior>
-                    <SidebarMenuButton as="a" tooltip="Membres" isActive={isLinkActive('/dashboard/members')}>
+                <Link href="/dashboard/members">
+                    <SidebarMenuButton tooltip="Membres" isActive={isLinkActive('/dashboard/members')}>
                         <Users />
                         Membres
                     </SidebarMenuButton>

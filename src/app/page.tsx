@@ -37,13 +37,21 @@ function LoginForm() {
     const auth = useAuth();
     const { toast } = useToast();
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!loginEmail || !loginPassword) {
             toast({ variant: "destructive", title: "Erreur", description: "Veuillez remplir l'email et le mot de passe." });
             return;
         }
-        initiateEmailSignIn(auth, loginEmail, loginPassword);
+        try {
+            await initiateEmailSignIn(auth, loginEmail, loginPassword);
+        } catch (error: any) {
+             toast({
+                variant: "destructive",
+                title: "Erreur de connexion",
+                description: "Email ou mot de passe incorrect.",
+            });
+        }
     };
 
     return (
@@ -81,13 +89,21 @@ function SignupForm() {
     const auth = useAuth();
     const { toast } = useToast();
 
-     const handleSignup = (e: React.FormEvent) => {
+     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!signupEmail || !signupPassword) {
             toast({ variant: "destructive", title: "Erreur", description: "Veuillez remplir tous les champs." });
             return;
         }
-        initiateEmailSignUp(auth, signupEmail, signupPassword);
+        try {
+            await initiateEmailSignUp(auth, signupEmail, signupPassword);
+        } catch (error: any) {
+            toast({
+                variant: "destructive",
+                title: "Erreur d'inscription",
+                description: error.message,
+            });
+        }
     };
 
     return (

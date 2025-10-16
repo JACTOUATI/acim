@@ -45,7 +45,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user } = useUser();
+  const { user, memberData } = useUser();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -131,7 +131,7 @@ export default function DashboardLayout({
                     </Avatar>
                     <div className="flex flex-col text-sm">
                         <span className="font-medium text-foreground">{user.displayName ?? user.email}</span>
-                        <span className="text-xs text-muted-foreground">Admin</span>
+                        {memberData?.role && <span className="text-xs text-muted-foreground capitalize">{memberData.role}</span>}
                     </div>
                 </div>
             )}

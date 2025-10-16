@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -90,7 +89,7 @@ export function AddMemberDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Ajouter un nouveau membre</DialogTitle>
           <DialogDescription>
@@ -100,114 +99,116 @@ export function AddMemberDialog({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nom complet</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Jean Dupont" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input placeholder="email@example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Téléphone</FormLabel>
-                  <FormControl>
-                    <Input placeholder="0612345678" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Adresse</FormLabel>
-                  <FormControl>
-                    <Input placeholder="123 rue de Paris" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Statut</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <div className="grid grid-cols-2 gap-4">
+                <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Nom complet</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner un statut" />
-                      </SelectTrigger>
+                        <Input placeholder="Jean Dupont" {...field} />
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Actif">Actif</SelectItem>
-                      <SelectItem value="Inactif">Inactif</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="doc"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Doc</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value || "none"}>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner un type de doc" />
-                      </SelectTrigger>
+                        <Input placeholder="email@example.com" {...field} />
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="none">Aucun</SelectItem>
-                      <SelectItem value="M">M</SelectItem>
-                      <SelectItem value="C">C</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="memo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Memo</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Notes complémentaires..." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Téléphone</FormLabel>
+                    <FormControl>
+                        <Input placeholder="0612345678" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Adresse</FormLabel>
+                    <FormControl>
+                        <Input placeholder="123 rue de Paris" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Statut</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Sélectionner un statut" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        <SelectItem value="Actif">Actif</SelectItem>
+                        <SelectItem value="Inactif">Inactif</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="doc"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Doc</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value || "none"}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Sélectionner un type de doc" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        <SelectItem value="none">Aucun</SelectItem>
+                        <SelectItem value="M">M</SelectItem>
+                        <SelectItem value="C">C</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="memo"
+                render={({ field }) => (
+                    <FormItem className="col-span-2">
+                    <FormLabel>Memo</FormLabel>
+                    <FormControl>
+                        <Textarea placeholder="Notes complémentaires..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Annuler</Button>
               <Button type="submit">Enregistrer</Button>

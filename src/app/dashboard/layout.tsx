@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -18,7 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUser } from "@/firebase/provider";
 import { Button } from "@/components/ui/button";
 import { getAuth, signOut } from "firebase/auth";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Home, Users, LogOut, ChevronDown, Settings, CreditCard, ShoppingCart, Calendar, Gift } from "lucide-react";
 import Image from "next/image";
 import { DashboardHeader } from "./header";
@@ -45,6 +46,7 @@ export default function DashboardLayout({
 }) {
   const { user } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleLogout = () => {
     const auth = getAuth();
@@ -56,6 +58,9 @@ export default function DashboardLayout({
         console.error("Erreur de déconnexion", error);
       });
   };
+  
+  const isLinkActive = (path: string) => pathname === path;
+
 
   return (
     <SidebarProvider>
@@ -66,13 +71,13 @@ export default function DashboardLayout({
         <SidebarContent>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton href="/dashboard" tooltip="Accueil">
+              <SidebarMenuButton href="/dashboard" tooltip="Accueil" isActive={isLinkActive('/dashboard')}>
                 <Home />
                 Accueil
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton href="/dashboard/members" tooltip="Membres">
+              <SidebarMenuButton href="/dashboard/members" tooltip="Membres" isActive={isLinkActive('/dashboard/members')}>
                 <Users />
                 Membres
               </SidebarMenuButton>
@@ -141,3 +146,4 @@ export default function DashboardLayout({
     </SidebarProvider>
   );
 }
+

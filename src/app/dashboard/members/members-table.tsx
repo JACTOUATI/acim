@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useState } from "react";
 import {
@@ -12,13 +13,16 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DeleteMemberDialog } from "./delete-member-dialog";
+import { EditMemberDialog } from "./edit-member-dialog";
 
 export type Member = {
   id: string;
   name: string;
   email: string;
   phone: string;
+  address: string;
   status: "Actif" | "Inactif";
+  role: "admin" | "membre";
   doc?: string;
   memo?: string;
 };
@@ -30,11 +34,17 @@ type MembersTableProps = {
 
 export function MembersTable({ members, isLoading }: MembersTableProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
   const handleDeleteClick = (member: Member) => {
     setSelectedMember(member);
     setIsDeleteDialogOpen(true);
+  };
+  
+  const handleEditClick = (member: Member) => {
+    setSelectedMember(member);
+    setIsEditDialogOpen(true);
   };
 
   if (isLoading) {
@@ -83,7 +93,7 @@ export function MembersTable({ members, isLoading }: MembersTableProps) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      // onClick={() => handleEditClick(member)}
+                      onClick={() => handleEditClick(member)}
                     >
                       <Pencil className="h-4 w-4" />
                       <span className="sr-only">Modifier</span>
@@ -111,6 +121,14 @@ export function MembersTable({ members, isLoading }: MembersTableProps) {
           member={selectedMember}
         />
       )}
+       {selectedMember && (
+        <EditMemberDialog
+          isOpen={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          member={selectedMember}
+        />
+      )}
     </>
   );
 }
+
